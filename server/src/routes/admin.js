@@ -356,3 +356,35 @@ adminRouter.get("/dashboard", async (req, res) => {
     peakHours,
   });
 });
+
+/* ---------------- History ---------------- */
+
+// GET /api/admin/history/sessions -> additions clôturées (historique), plus récentes d'abord
+adminRouter.get("/history/sessions", async (req, res) => {
+  const restaurantId = req.user.restaurantId;
+  const { from, to, limit } = req.query;
+
+  const closedAtFilter = {};
+  if (from) closedAtFilter.gte = new Date(from);
+  if (to) closedAtFilter.lte = new Date(to);
+
+  const sessions = await prisma.tableSession.findMany({
+    where: {
+      diningTable: { restaurantId },
+      status: "paid",
+      ...(from || to ? { closedAt: closedAtFilter } : {}),
+    },
+    orderBy: { closedAt: "desc" },
+    take: Math.min(Number(limit) || 50, 200),
+    include: {
+      diningTable: true,
+      orders: {
+        where: { status: { not: "cancelled" } },
+        include: { items: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  res.json(sessions);
+});

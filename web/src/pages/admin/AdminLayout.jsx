@@ -8,6 +8,7 @@ const TABS = [
   { to: "/admin/tables", key: "admin.nav.tables" },
   { to: "/admin/staff", key: "admin.nav.staff" },
   { to: "/admin/dashboard", key: "admin.nav.dashboard" },
+  { to: "/admin/history", key: "admin.nav.history" },
 ];
 
 export default function AdminLayout() {

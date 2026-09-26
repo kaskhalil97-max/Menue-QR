@@ -10,6 +10,7 @@ import AdminMenuPage from "./pages/admin/AdminMenuPage.jsx";
 import AdminTablesPage from "./pages/admin/AdminTablesPage.jsx";
 import AdminStaffPage from "./pages/admin/AdminStaffPage.jsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
+import AdminHistoryPage from "./pages/admin/AdminHistoryPage.jsx";
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="tables" element={<AdminTablesPage />} />
           <Route path="staff" element={<AdminStaffPage />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="history" element={<AdminHistoryPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
