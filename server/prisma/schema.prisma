@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  logo      String?
+  currency  String   @default("MAD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  tables       DiningTable[]
+  categories   Category[]
+
+  @@map("restaurants")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  name         String
+  email        String   @unique
+  password     String
+  role         String // admin | kitchen | waiter
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("users")
+}
+
+model DiningTable {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  label        String
+  qrToken      String   @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
+  sessions        TableSession[]
+  serviceRequests ServiceRequest[]
+
+  @@map("dining_tables")
+}
+
+model TableSession {
+  id            Int       @id @default(autoincrement())
+  diningTableId Int
+  status        String    @default("open") // open | bill_requested | paid
+  total         Float     @default(0)
+  paymentMethod String? // cash | card
+  openedAt      DateTime  @default(now())
+  closedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  diningTable DiningTable @relation(fields: [diningTableId], references: [id])
+  orders      Order[]
+
+  @@map("table_sessions")
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  nameAr       String
+  nameEn       String
+  position     Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  menuItems  MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id             Int      @id @default(autoincrement())
+  categoryId     Int
+  nameAr         String
+  nameEn         String
+  descriptionAr  String?
+  descriptionEn  String?
+  price          Float
+  image          String?
+  isAvailable    Boolean  @default(true)
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  category   Category    @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Order {
+  id             Int      @id @default(autoincrement())
+  tableSessionId Int
+  status         String   @default("new") // new | preparing | ready | served | cancelled
+  total          Float    @default(0)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tableSession TableSession @relation(fields: [tableSessionId], references: [id])
+  items        OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  menuItemId Int
+  name       String
+  unitPrice  Float
+  quantity   Int      @default(1)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model ServiceRequest {
+  id            Int      @id @default(autoincrement())
+  diningTableId Int
+  type          String // call_waiter | bill
+  status        String   @default("pending") // pending | done
+  handledBy     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  diningTable DiningTable @relation(fields: [diningTableId], references: [id])
+
+  @@map("service_requests")
+}
