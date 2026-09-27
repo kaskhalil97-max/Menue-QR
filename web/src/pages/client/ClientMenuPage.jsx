@@ -189,7 +189,7 @@ export default function ClientMenuPage() {
   return (
     <div className="min-h-screen bg-sand-50 dark:bg-olive-950 pb-28">
       <header className="sticky top-0 z-20 bg-gradient-to-b from-olive-900 to-olive-800 px-4 pb-4 pt-4 text-white shadow-card">
-        <div className="flex items-center justify-between">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div className="flex items-center gap-3">
             {data.restaurant.logo && (
               <img
@@ -211,7 +211,7 @@ export default function ClientMenuPage() {
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mx-auto mt-4 flex max-w-2xl gap-2">
           {["menu", "orders"].map((key) => (
             <button
               key={key}
@@ -231,7 +231,7 @@ export default function ClientMenuPage() {
 
       {tab === "menu" && (
         <>
-          <nav className="no-scrollbar sticky top-[104px] z-10 flex gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
+          <nav className="no-scrollbar sticky top-[104px] z-10 mx-auto flex max-w-2xl gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
             {data.categories.map((cat) => (
               <button
                 key={cat.id}
@@ -248,7 +248,7 @@ export default function ClientMenuPage() {
             ))}
           </nav>
 
-          <main className="space-y-7 px-4 py-4">
+          <main className="mx-auto max-w-2xl space-y-7 px-4 py-4">
             {data.categories.map((cat) => (
               <section
                 key={cat.id}
@@ -302,7 +302,7 @@ export default function ClientMenuPage() {
       )}
 
       {tab === "orders" && (
-        <main className="space-y-3 px-4 py-4">
+        <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
           {orders.length === 0 && <p className="text-center text-olive-500 dark:text-olive-400">{t("client.emptyCart")}</p>}
           {orders.map((order) => {
             const StatusIcon = STATUS_ICON[order.status];
@@ -359,38 +359,40 @@ export default function ClientMenuPage() {
         />
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-20 space-y-2 border-t border-sand-200 dark:border-olive-700 bg-white/95 dark:bg-olive-900/95 p-3 shadow-[0_-4px_16px_rgba(38,51,15,0.08)] backdrop-blur">
-        {requestSent && (
-          <p className="text-center text-sm font-medium text-olive-700 dark:text-sand-200">{t("client.requestSent")}</p>
-        )}
-        <div className="flex gap-2">
-          <button
-            onClick={() => sendServiceRequest("call_waiter")}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-sand-100 dark:bg-olive-800 py-2 text-sm font-medium text-olive-800 dark:text-sand-100"
-          >
-            <Bell className="h-4 w-4" /> {t("client.callWaiter")}
-          </button>
-          <button
-            onClick={() => sendServiceRequest("bill")}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-sand-100 dark:bg-olive-800 py-2 text-sm font-medium text-olive-800 dark:text-sand-100"
-          >
-            <Receipt className="h-4 w-4" /> {t("client.requestBill")}
-          </button>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-sand-200 dark:border-olive-700 bg-white/95 dark:bg-olive-900/95 p-3 shadow-[0_-4px_16px_rgba(38,51,15,0.08)] backdrop-blur">
+        <div className="mx-auto max-w-2xl space-y-2">
+          {requestSent && (
+            <p className="text-center text-sm font-medium text-olive-700 dark:text-sand-200">{t("client.requestSent")}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => sendServiceRequest("call_waiter")}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-sand-100 dark:bg-olive-800 py-2 text-sm font-medium text-olive-800 dark:text-sand-100"
+            >
+              <Bell className="h-4 w-4" /> {t("client.callWaiter")}
+            </button>
+            <button
+              onClick={() => sendServiceRequest("bill")}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-sand-100 dark:bg-olive-800 py-2 text-sm font-medium text-olive-800 dark:text-sand-100"
+            >
+              <Receipt className="h-4 w-4" /> {t("client.requestBill")}
+            </button>
+          </div>
+          {cart.length > 0 && (
+            <button
+              onClick={() => setTab("cart")}
+              className="flex w-full items-center justify-between rounded-full bg-brick-500 px-4 py-2.5 font-medium text-white shadow-floating"
+            >
+              <span className="flex items-center gap-1.5">
+                <ShoppingBag className="h-4 w-4" />
+                {t("client.viewCart")} ({cartCount})
+              </span>
+              <span>
+                {cartTotal.toFixed(2)} {data.restaurant.currency}
+              </span>
+            </button>
+          )}
         </div>
-        {cart.length > 0 && (
-          <button
-            onClick={() => setTab("cart")}
-            className="flex w-full items-center justify-between rounded-full bg-brick-500 px-4 py-2.5 font-medium text-white shadow-floating"
-          >
-            <span className="flex items-center gap-1.5">
-              <ShoppingBag className="h-4 w-4" />
-              {t("client.viewCart")} ({cartCount})
-            </span>
-            <span>
-              {cartTotal.toFixed(2)} {data.restaurant.currency}
-            </span>
-          </button>
-        )}
       </div>
 
       {tab === "cart" && (
