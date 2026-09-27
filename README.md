@@ -95,6 +95,15 @@ préférence système au premier chargement et persistance du choix en
 la teinte olive de la marque est réutilisée pour les surfaces sombres plutôt
 qu'un gris générique.
 
+## Upload d'images
+
+Les photos de plats sont de vrais fichiers envoyés depuis l'admin (pas
+seulement un champ URL) : `POST /api/admin/uploads` (multipart, `multer`)
+valide le type MIME et la taille (5 Mo max), enregistre le fichier sous un
+nom généré aléatoirement dans `server/uploads/` (non versionné) et renvoie
+une URL absolue, servie statiquement via `express.static`. Le champ reste
+aussi éditable manuellement pour coller un lien externe (Unsplash, etc.).
+
 ## Fonctionnalités par interface
 
 - **Client** (`/t/:qrToken`, mobile, sans compte) : menu par catégories,

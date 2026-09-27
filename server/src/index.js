@@ -10,6 +10,7 @@ import { waiterRouter } from "./routes/waiter.js";
 import { adminRouter } from "./routes/admin.js";
 import { publicMenuRouter } from "./routes/publicMenu.js";
 import { initSockets } from "./sockets/index.js";
+import { UPLOADS_DIR } from "./lib/uploads.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +19,7 @@ const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
 app.use(cors({ origin: clientOrigin }));
 app.use(express.json());
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 const io = new Server(server, { cors: { origin: clientOrigin } });
 initSockets(io);

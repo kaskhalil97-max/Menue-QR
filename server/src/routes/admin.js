@@ -5,10 +5,26 @@ import PDFDocument from "pdfkit";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { generateQrToken } from "../lib/tokens.js";
+import { uploadImage } from "../lib/uploads.js";
 import { emitToMenu } from "../sockets/index.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireRole("admin"));
+
+/* ---------------- Uploads ---------------- */
+
+// POST /api/admin/uploads -> dépose une image (plat, logo...) et renvoie son URL publique
+adminRouter.post("/uploads", (req, res) => {
+  uploadImage.single("image")(req, res, (err) => {
+    if (err) {
+      const code = err.message === "unsupported_file_type" ? 415 : 400;
+      return res.status(code).json({ error: err.message || "upload_failed" });
+    }
+    if (!req.file) return res.status(400).json({ error: "no_file" });
+    const url = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    res.status(201).json({ url });
+  });
+});
 
 /* ---------------- Categories ---------------- */
 

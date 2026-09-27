@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "../../lib/api.js";
+import ImageUploadField from "../../components/ImageUploadField.jsx";
+
+const TEXT_FIELDS = ["nameAr", "nameEn", "descriptionAr", "descriptionEn", "price"];
 
 const emptyItemForm = {
   nameAr: "",
@@ -158,22 +161,28 @@ export default function AdminMenuPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-sand-100 dark:bg-olive-800 p-3 sm:grid-cols-3 lg:grid-cols-6">
-            {["nameAr", "nameEn", "descriptionAr", "descriptionEn", "price", "image"].map((field) => (
-              <input
-                key={field}
-                placeholder={t(`common.${field}`)}
-                value={(itemForms[cat.id] || emptyItemForm)[field]}
-                onChange={(e) => updateItemForm(cat.id, field, e.target.value)}
-                className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
-              />
-            ))}
-            <button
-              onClick={() => addItem(cat.id)}
-              className="col-span-2 flex items-center justify-center gap-1.5 rounded-full bg-brick-500 px-3 py-1.5 text-sm font-medium text-white sm:col-span-1"
-            >
-              <Plus className="h-4 w-4" /> {t("admin.menu.addItem")}
-            </button>
+          <div className="space-y-3 rounded-xl bg-sand-100 dark:bg-olive-800 p-3">
+            <ImageUploadField
+              value={(itemForms[cat.id] || emptyItemForm).image}
+              onChange={(url) => updateItemForm(cat.id, "image", url)}
+            />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {TEXT_FIELDS.map((field) => (
+                <input
+                  key={field}
+                  placeholder={t(`common.${field}`)}
+                  value={(itemForms[cat.id] || emptyItemForm)[field]}
+                  onChange={(e) => updateItemForm(cat.id, field, e.target.value)}
+                  className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+                />
+              ))}
+              <button
+                onClick={() => addItem(cat.id)}
+                className="col-span-2 flex items-center justify-center gap-1.5 rounded-full bg-brick-500 px-3 py-1.5 text-sm font-medium text-white sm:col-span-1"
+              >
+                <Plus className="h-4 w-4" /> {t("admin.menu.addItem")}
+              </button>
+            </div>
           </div>
         </div>
       ))}
@@ -182,7 +191,11 @@ export default function AdminMenuPage() {
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 animate-fade-in p-4">
           <div className="animate-slide-up w-full max-w-md space-y-2 rounded-3xl bg-white dark:bg-olive-900 p-6">
             <h3 className="mb-2 text-lg font-bold text-olive-900 dark:text-sand-50">{t("admin.menu.edit")}</h3>
-            {["nameAr", "nameEn", "descriptionAr", "descriptionEn", "price", "image"].map((field) => (
+            <ImageUploadField
+              value={editingItem.image}
+              onChange={(url) => setEditingItem((prev) => ({ ...prev, image: url }))}
+            />
+            {TEXT_FIELDS.map((field) => (
               <input
                 key={field}
                 placeholder={t(`common.${field}`)}
