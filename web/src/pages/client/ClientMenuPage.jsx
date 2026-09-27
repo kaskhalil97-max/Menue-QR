@@ -189,7 +189,7 @@ export default function ClientMenuPage() {
   return (
     <div className="min-h-screen bg-sand-50 dark:bg-olive-950 pb-28">
       <header className="sticky top-0 z-20 bg-gradient-to-b from-olive-900 to-olive-800 px-4 pb-4 pt-4 text-white shadow-card">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
             {data.restaurant.logo && (
               <img
@@ -211,7 +211,7 @@ export default function ClientMenuPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-4 flex max-w-2xl gap-2">
+        <div className="mx-auto mt-4 flex max-w-6xl gap-2">
           {["menu", "orders"].map((key) => (
             <button
               key={key}
@@ -231,7 +231,7 @@ export default function ClientMenuPage() {
 
       {tab === "menu" && (
         <>
-          <nav className="no-scrollbar sticky top-[104px] z-10 mx-auto flex max-w-2xl gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
+          <nav className="no-scrollbar sticky top-[104px] z-10 mx-auto flex max-w-6xl gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
             {data.categories.map((cat) => (
               <button
                 key={cat.id}
@@ -248,7 +248,7 @@ export default function ClientMenuPage() {
             ))}
           </nav>
 
-          <main className="mx-auto max-w-2xl space-y-7 px-4 py-4">
+          <main className="mx-auto max-w-6xl space-y-7 px-4 py-4">
             {data.categories.map((cat) => (
               <section
                 key={cat.id}
@@ -257,7 +257,7 @@ export default function ClientMenuPage() {
                 className="scroll-mt-[160px]"
               >
                 <h2 className="mb-3 text-lg font-bold text-olive-900 dark:text-sand-50">{localized(cat, "name", lang)}</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {cat.menuItems.map((item) => (
                     <button
                       key={item.id}
@@ -302,50 +302,52 @@ export default function ClientMenuPage() {
       )}
 
       {tab === "orders" && (
-        <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
+        <main className="mx-auto max-w-6xl px-4 py-4">
           {orders.length === 0 && <p className="text-center text-olive-500 dark:text-olive-400">{t("client.emptyCart")}</p>}
-          {orders.map((order) => {
-            const StatusIcon = STATUS_ICON[order.status];
-            return (
-              <div key={order.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="font-semibold text-olive-800 dark:text-sand-100">#{order.id}</span>
-                  <span
-                    className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status]}`}
-                  >
-                    <StatusIcon className="h-3.5 w-3.5" />
-                    {t(`client.status.${order.status}`)}
-                  </span>
-                </div>
-                <ul className="space-y-1 text-sm text-olive-700 dark:text-sand-200">
-                  {order.items.map((it) => (
-                    <li key={it.id} className="flex justify-between">
-                      <span>
-                        {it.quantity}× {it.name}
-                        {it.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({it.note})</em>}
-                      </span>
-                      <span>{(it.unitPrice * it.quantity).toFixed(2)}</span>
-                    </li>
-                  ))}
-                </ul>
-                {order.status !== "cancelled" && (
-                  <div className="mt-3 flex gap-1.5">
-                    {STATUS_STEPS.map((step) => {
-                      const reached = STATUS_STEPS.indexOf(order.status) >= STATUS_STEPS.indexOf(step);
-                      return (
-                        <div
-                          key={step}
-                          className={`h-1.5 flex-1 rounded-full transition-colors ${
-                            reached ? "bg-olive-600 dark:bg-olive-400" : "bg-olive-100 dark:bg-olive-800"
-                          }`}
-                        />
-                      );
-                    })}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {orders.map((order) => {
+              const StatusIcon = STATUS_ICON[order.status];
+              return (
+                <div key={order.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-semibold text-olive-800 dark:text-sand-100">#{order.id}</span>
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status]}`}
+                    >
+                      <StatusIcon className="h-3.5 w-3.5" />
+                      {t(`client.status.${order.status}`)}
+                    </span>
                   </div>
-                )}
-              </div>
-            );
-          })}
+                  <ul className="space-y-1 text-sm text-olive-700 dark:text-sand-200">
+                    {order.items.map((it) => (
+                      <li key={it.id} className="flex justify-between">
+                        <span>
+                          {it.quantity}× {it.name}
+                          {it.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({it.note})</em>}
+                        </span>
+                        <span>{(it.unitPrice * it.quantity).toFixed(2)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {order.status !== "cancelled" && (
+                    <div className="mt-3 flex gap-1.5">
+                      {STATUS_STEPS.map((step) => {
+                        const reached = STATUS_STEPS.indexOf(order.status) >= STATUS_STEPS.indexOf(step);
+                        return (
+                          <div
+                            key={step}
+                            className={`h-1.5 flex-1 rounded-full transition-colors ${
+                              reached ? "bg-olive-600 dark:bg-olive-400" : "bg-olive-100 dark:bg-olive-800"
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </main>
       )}
 
@@ -360,7 +362,7 @@ export default function ClientMenuPage() {
       )}
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-sand-200 dark:border-olive-700 bg-white/95 dark:bg-olive-900/95 p-3 shadow-[0_-4px_16px_rgba(38,51,15,0.08)] backdrop-blur">
-        <div className="mx-auto max-w-2xl space-y-2">
+        <div className="mx-auto max-w-6xl space-y-2">
           {requestSent && (
             <p className="text-center text-sm font-medium text-olive-700 dark:text-sand-200">{t("client.requestSent")}</p>
           )}
