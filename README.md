@@ -86,6 +86,15 @@ charges).
   `<html>`, uniquement des propriétés CSS logiques (`ms-`, `me-`,
   `text-start`, jamais `ml-`/`mr-`/`text-left`).
 
+## Mode sombre
+
+Bascule manuelle (icône lune/soleil) sur chaque écran, avec détection de la
+préférence système au premier chargement et persistance du choix en
+`localStorage`. Implémenté via `darkMode: "class"` de Tailwind (`web/src/theme.js`
++ un script inline dans `index.html` pour éviter le flash blanc au chargement) —
+la teinte olive de la marque est réutilisée pour les surfaces sombres plutôt
+qu'un gris générique.
+
 ## Fonctionnalités par interface
 
 - **Client** (`/t/:qrToken`, mobile, sans compte) : menu par catégories,

@@ -44,15 +44,15 @@ export default function AdminTablesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-4 shadow-card">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
         <form onSubmit={addTable} className="flex items-end gap-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-olive-700">{t("common.name")}</label>
+            <label className="mb-1 block text-xs font-medium text-olive-700 dark:text-sand-200">{t("common.name")}</label>
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Table 9"
-              className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
+              className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-3 py-1.5 text-sm text-olive-900 dark:text-sand-50"
             />
           </div>
           <button className="flex items-center gap-1.5 rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
@@ -69,25 +69,25 @@ export default function AdminTablesPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {tables.map((table) => (
-          <div key={table.id} className="rounded-2xl bg-white p-4 shadow-card">
+          <div key={table.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-lg font-bold text-olive-900">{table.label}</span>
+              <span className="text-lg font-bold text-olive-900 dark:text-sand-50">{table.label}</span>
               <button
                 onClick={() => toggleActive(table)}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  table.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  table.isActive ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
                 }`}
               >
                 {table.isActive ? t("admin.tables.active") : t("admin.tables.inactive")}
               </button>
             </div>
-            <p className="mb-3 flex items-center gap-1.5 break-all text-xs text-olive-500">
+            <p className="mb-3 flex items-center gap-1.5 break-all text-xs text-olive-500 dark:text-olive-400">
               <QrCode className="h-3.5 w-3.5 flex-none" />
               {t("admin.tables.demoLink")}: /t/{table.qrToken}
             </p>
             <button
               onClick={() => regenerate(table.id)}
-              className="flex items-center gap-1.5 text-sm text-olive-600 underline"
+              className="flex items-center gap-1.5 text-sm text-olive-600 dark:text-olive-300 underline"
             >
               <RefreshCw className="h-3.5 w-3.5" /> {t("admin.tables.regenerate")}
             </button>

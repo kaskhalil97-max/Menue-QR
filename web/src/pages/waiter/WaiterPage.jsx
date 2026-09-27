@@ -5,6 +5,7 @@ import { api } from "../../lib/api.js";
 import { socket } from "../../lib/socket.js";
 import { useAuth } from "../../lib/auth.jsx";
 import LangSwitcher from "../../components/LangSwitcher.jsx";
+import ThemeToggle from "../../components/ThemeToggle.jsx";
 
 const REQUEST_ICON = { call_waiter: Bell, bill: Receipt };
 
@@ -44,14 +45,15 @@ export default function WaiterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-sand-50">
-      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-card">
-        <h1 className="text-xl font-bold text-olive-900">
+    <div className="min-h-screen bg-sand-50 dark:bg-olive-950">
+      <header className="flex items-center justify-between bg-white dark:bg-olive-900 px-5 py-3 shadow-card">
+        <h1 className="text-xl font-bold text-olive-900 dark:text-sand-50">
           {t("waiter.title")} — {user?.name}
         </h1>
         <div className="flex items-center gap-3">
           <LangSwitcher />
-          <button onClick={logout} className="text-sm text-olive-600 underline">
+          <ThemeToggle />
+          <button onClick={logout} className="text-sm text-olive-600 dark:text-olive-300 underline">
             {t("staff.logout")}
           </button>
         </div>
@@ -59,22 +61,22 @@ export default function WaiterPage() {
 
       <main className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-lg font-bold text-olive-900">{t("waiter.readyOrders")}</h2>
+          <h2 className="mb-3 text-lg font-bold text-olive-900 dark:text-sand-50">{t("waiter.readyOrders")}</h2>
           <div className="space-y-3">
             {readyOrders.length === 0 && (
-              <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+              <p className="rounded-xl border border-dashed border-sand-200 dark:border-olive-700 py-6 text-center text-sm text-olive-400">
                 {t("waiter.emptyReady")}
               </p>
             )}
             {readyOrders.map((order) => (
-              <div key={order.id} className="rounded-2xl bg-white p-4 shadow-card">
+              <div key={order.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-bold text-olive-900">{order.tableSession.diningTable.label}</span>
-                  <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs text-green-700">
+                  <span className="font-bold text-olive-900 dark:text-sand-50">{order.tableSession.diningTable.label}</span>
+                  <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs text-green-700 dark:bg-green-500/15 dark:text-green-400">
                     {t("client.status.ready")}
                   </span>
                 </div>
-                <ul className="mb-3 text-sm text-olive-700">
+                <ul className="mb-3 text-sm text-olive-700 dark:text-sand-200">
                   {order.items.map((it) => (
                     <li key={it.id}>
                       {it.quantity}× {it.name}
@@ -93,31 +95,31 @@ export default function WaiterPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-lg font-bold text-olive-900">{t("waiter.serviceRequests")}</h2>
+          <h2 className="mb-3 text-lg font-bold text-olive-900 dark:text-sand-50">{t("waiter.serviceRequests")}</h2>
           <div className="space-y-3">
             {requests.length === 0 && (
-              <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+              <p className="rounded-xl border border-dashed border-sand-200 dark:border-olive-700 py-6 text-center text-sm text-olive-400">
                 {t("waiter.emptyRequests")}
               </p>
             )}
             {requests.map((reqst) => {
               const Icon = REQUEST_ICON[reqst.type];
               return (
-                <div key={reqst.id} className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-card">
+                <div key={reqst.id} className="flex items-center justify-between rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-100 text-olive-700">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-100 dark:bg-olive-800 text-olive-700 dark:text-sand-200">
                       <Icon className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="font-bold text-olive-900">{reqst.diningTable.label}</p>
-                      <p className="text-sm text-olive-600">{t(`waiter.type.${reqst.type}`)}</p>
+                      <p className="font-bold text-olive-900 dark:text-sand-50">{reqst.diningTable.label}</p>
+                      <p className="text-sm text-olive-600 dark:text-olive-300">{t(`waiter.type.${reqst.type}`)}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     {reqst.type === "bill" && (
                       <button
                         onClick={() => setBillSession({ diningTableId: reqst.diningTableId })}
-                        className="rounded-full border border-brick-500 px-3 py-1.5 text-sm text-brick-600"
+                        className="rounded-full border border-brick-500 px-3 py-1.5 text-sm text-brick-600 dark:text-brick-400"
                       >
                         {t("waiter.closeBill")}
                       </button>
@@ -171,23 +173,23 @@ function BillModal({ diningTableId, onClose, onClosed }) {
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 animate-fade-in p-4">
-      <div className="animate-slide-up w-full max-w-sm rounded-3xl bg-white p-6">
+      <div className="animate-slide-up w-full max-w-sm rounded-3xl bg-white dark:bg-olive-900 p-6">
         {loading ? (
-          <p className="text-center text-olive-500">{t("common.loading")}</p>
+          <p className="text-center text-olive-500 dark:text-olive-400">{t("common.loading")}</p>
         ) : !session ? (
-          <p className="text-center text-olive-500">—</p>
+          <p className="text-center text-olive-500 dark:text-olive-400">—</p>
         ) : (
           <>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-olive-900">
+              <h3 className="text-lg font-bold text-olive-900 dark:text-sand-50">
                 {session.diningTable.label} — {t("waiter.closeBill")}
               </h3>
-              <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-sand-100">
-                <X className="h-4 w-4 text-olive-700" />
+              <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-sand-100 dark:bg-olive-800">
+                <X className="h-4 w-4 text-olive-700 dark:text-sand-200" />
               </button>
             </div>
-            <p className="mb-4 text-2xl font-bold text-brick-600">{session.total.toFixed(2)}</p>
-            <label className="mb-1 block text-sm font-medium text-olive-700">
+            <p className="mb-4 text-2xl font-bold text-brick-600 dark:text-brick-400">{session.total.toFixed(2)}</p>
+            <label className="mb-1 block text-sm font-medium text-olive-700 dark:text-sand-200">
               {t("waiter.paymentMethod")}
             </label>
             <div className="mb-6 flex gap-2">
@@ -201,7 +203,7 @@ function BillModal({ diningTableId, onClose, onClosed }) {
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border py-2 text-sm font-medium ${
                     method === key
                       ? "border-olive-600 bg-olive-600 text-white"
-                      : "border-sand-200 text-olive-700"
+                      : "border-sand-200 dark:border-olive-700 text-olive-700 dark:text-sand-200"
                   }`}
                 >
                   <MIcon className="h-4 w-4" /> {t(`waiter.${key}`)}
@@ -209,7 +211,7 @@ function BillModal({ diningTableId, onClose, onClosed }) {
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={onClose} className="flex-1 rounded-full border border-sand-200 py-2 text-olive-700">
+              <button onClick={onClose} className="flex-1 rounded-full border border-sand-200 dark:border-olive-700 py-2 text-olive-700 dark:text-sand-200">
                 {t("client.close")}
               </button>
               <button onClick={confirm} className="flex-1 rounded-full bg-brick-500 py-2 font-medium text-white">

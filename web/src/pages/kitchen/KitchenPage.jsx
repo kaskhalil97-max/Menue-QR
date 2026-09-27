@@ -5,6 +5,7 @@ import { api } from "../../lib/api.js";
 import { socket } from "../../lib/socket.js";
 import { useAuth } from "../../lib/auth.jsx";
 import LangSwitcher from "../../components/LangSwitcher.jsx";
+import ThemeToggle from "../../components/ThemeToggle.jsx";
 
 const WARN_MIN = Number(import.meta.env.VITE_KITCHEN_TIMER_WARN_MIN || 10);
 const DANGER_MIN = Number(import.meta.env.VITE_KITCHEN_TIMER_DANGER_MIN || 20);
@@ -27,9 +28,9 @@ function useElapsedMinutes(createdAt) {
 }
 
 function timerColor(minutes) {
-  if (minutes < WARN_MIN) return { bar: "bg-green-500", chip: "bg-green-100 text-green-700" };
-  if (minutes < DANGER_MIN) return { bar: "bg-amber-500", chip: "bg-amber-100 text-amber-700" };
-  return { bar: "bg-red-500", chip: "bg-red-100 text-red-700" };
+  if (minutes < WARN_MIN) return { bar: "bg-green-500", chip: "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400" };
+  if (minutes < DANGER_MIN) return { bar: "bg-amber-500", chip: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" };
+  return { bar: "bg-red-500", chip: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400" };
 }
 
 function playBeep() {
@@ -90,13 +91,14 @@ export default function KitchenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-sand-50">
-      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-card">
-        <h1 className="text-xl font-bold text-olive-900">
+    <div className="min-h-screen bg-sand-50 dark:bg-olive-950">
+      <header className="flex items-center justify-between bg-white dark:bg-olive-900 px-5 py-3 shadow-card">
+        <h1 className="text-xl font-bold text-olive-900 dark:text-sand-50">
           {t("kitchen.title")} — {user?.name}
         </h1>
         <div className="flex items-center gap-3">
           <LangSwitcher />
+          <ThemeToggle />
           {!serviceStarted ? (
             <button
               onClick={() => setServiceStarted(true)}
@@ -105,11 +107,11 @@ export default function KitchenPage() {
               {t("kitchen.startService")}
             </button>
           ) : (
-            <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-700">
+            <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-700 dark:bg-green-500/15 dark:text-green-400">
               <Volume2 className="h-4 w-4" /> {t("kitchen.serviceStarted")}
             </span>
           )}
-          <button onClick={logout} className="text-sm text-olive-600 underline">
+          <button onClick={logout} className="text-sm text-olive-600 dark:text-olive-300 underline">
             {t("staff.logout")}
           </button>
         </div>
@@ -121,21 +123,21 @@ export default function KitchenPage() {
           const Icon = col.icon;
           return (
             <div key={col.status} className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-card">
+              <div className="flex items-center gap-2 rounded-xl bg-white dark:bg-olive-900 px-4 py-2.5 shadow-card">
                 <span className={`flex h-8 w-8 items-center justify-center rounded-full ${col.tint} text-white`}>
                   <Icon className="h-4 w-4" />
                 </span>
-                <h2 className="flex-1 font-bold text-olive-900">
+                <h2 className="flex-1 font-bold text-olive-900 dark:text-sand-50">
                   {col.status === "new" ? t("kitchen.new") : t(`client.status.${col.status}`)}
                 </h2>
-                <span className="rounded-full bg-sand-100 px-2.5 py-0.5 text-sm font-semibold text-olive-700">
+                <span className="rounded-full bg-sand-100 dark:bg-olive-800 px-2.5 py-0.5 text-sm font-semibold text-olive-700 dark:text-sand-200">
                   {columnOrders.length}
                 </span>
               </div>
 
               <div className="flex flex-col gap-3">
                 {columnOrders.length === 0 && (
-                  <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+                  <p className="rounded-xl border border-dashed border-sand-200 dark:border-olive-700 py-6 text-center text-sm text-olive-400">
                     {t("kitchen.empty")}
                   </p>
                 )}
@@ -158,29 +160,29 @@ function KitchenCard({ order, onAdvance, onCancel }) {
   const table = order.tableSession.diningTable;
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-card">
+    <div className="overflow-hidden rounded-2xl bg-white dark:bg-olive-900 shadow-card">
       <div className={`h-1.5 ${colors.bar}`} />
       <div className="p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-lg font-bold text-olive-900">{table.label}</span>
+          <span className="text-lg font-bold text-olive-900 dark:text-sand-50">{table.label}</span>
           <span className={`rounded-full px-2.5 py-0.5 text-sm font-semibold ${colors.chip}`}>
             {Math.floor(minutes)} min
           </span>
         </div>
-        <ul className="mb-3 space-y-1.5 text-base text-olive-800">
+        <ul className="mb-3 space-y-1.5 text-base text-olive-800 dark:text-sand-100">
           {order.items.map((it) => (
             <li key={it.id}>
               <span className="font-semibold">{it.quantity}×</span> {it.menuItem?.nameAr || it.name}
-              {it.menuItem?.nameAr && <span className="text-olive-500"> / {it.name}</span>}
+              {it.menuItem?.nameAr && <span className="text-olive-500 dark:text-olive-400"> / {it.name}</span>}
               {it.note && (
-                <div className="text-sm italic text-brick-600">
+                <div className="text-sm italic text-brick-600 dark:text-brick-400">
                   {t("kitchen.note")}: {it.note}
                 </div>
               )}
             </li>
           ))}
         </ul>
-        {order.note && <p className="mb-3 text-sm italic text-brick-600">{order.note}</p>}
+        {order.note && <p className="mb-3 text-sm italic text-brick-600 dark:text-brick-400">{order.note}</p>}
         <div className="flex gap-2">
           {order.status !== "ready" && (
             <button
@@ -193,13 +195,13 @@ function KitchenCard({ order, onAdvance, onCancel }) {
           {order.status !== "ready" && (
             <button
               onClick={() => onCancel(order.id)}
-              className="flex items-center justify-center rounded-full border border-red-300 px-3 py-2.5 text-red-600"
+              className="flex items-center justify-center rounded-full border border-red-300 dark:border-red-800 px-3 py-2.5 text-red-600 dark:text-red-400"
             >
               <X className="h-4 w-4" />
             </button>
           )}
           {order.status === "ready" && (
-            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-green-100 py-2.5 text-sm font-medium text-green-700">
+            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-green-100 py-2.5 text-sm font-medium text-green-700 dark:bg-green-500/15 dark:text-green-400">
               <CheckCircle2 className="h-4 w-4" /> {t("client.status.ready")}
             </span>
           )}

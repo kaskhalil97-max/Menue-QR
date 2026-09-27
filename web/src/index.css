@@ -9,7 +9,7 @@ body,
 }
 
 body {
-  @apply bg-sand-50 text-olive-950;
+  @apply bg-sand-50 text-olive-950 dark:bg-olive-950 dark:text-sand-50;
   font-family: "Cairo", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -24,7 +24,7 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-olive-300 rounded-full;
+  @apply bg-olive-300 dark:bg-olive-700 rounded-full;
 }
 
 /* masque la scrollbar horizontale des onglets de catégories sans perdre le scroll */

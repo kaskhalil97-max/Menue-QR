@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 const ROLE_HOME = { admin: "/admin", kitchen: "/kitchen", waiter: "/waiter" };
 
@@ -30,11 +31,14 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sand-50 p-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-card">
-        <p className="font-logo mb-1 text-center text-2xl text-olive-900">Bayt Zaytoun</p>
-        <h1 className="mb-6 text-center text-sm font-medium text-olive-500">{t("staff.login.title")}</h1>
-        <label className="mb-1 block text-sm font-medium text-olive-700">
+    <div className="relative flex min-h-screen items-center justify-center bg-sand-50 dark:bg-olive-950 p-4">
+      <div className="absolute end-4 top-4">
+        <ThemeToggle />
+      </div>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl bg-white dark:bg-olive-900 p-8 shadow-card">
+        <p className="font-logo mb-1 text-center text-2xl text-olive-900 dark:text-sand-50">Bayt Zaytoun</p>
+        <h1 className="mb-6 text-center text-sm font-medium text-olive-500 dark:text-olive-400">{t("staff.login.title")}</h1>
+        <label className="mb-1 block text-sm font-medium text-olive-700 dark:text-sand-200">
           {t("staff.login.email")}
         </label>
         <input
@@ -42,9 +46,9 @@ export default function StaffLoginPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-sand-200 px-3 py-2 focus:border-olive-500 focus:outline-none"
+          className="mb-4 w-full rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-3 py-2 text-olive-900 dark:text-sand-50 focus:border-olive-500 focus:outline-none"
         />
-        <label className="mb-1 block text-sm font-medium text-olive-700">
+        <label className="mb-1 block text-sm font-medium text-olive-700 dark:text-sand-200">
           {t("staff.login.password")}
         </label>
         <input
@@ -52,9 +56,9 @@ export default function StaffLoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-sand-200 px-3 py-2 focus:border-olive-500 focus:outline-none"
+          className="mb-4 w-full rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-3 py-2 text-olive-900 dark:text-sand-50 focus:border-olive-500 focus:outline-none"
         />
-        {error && <p className="mb-4 text-sm text-brick-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brick-600 dark:text-brick-400">{error}</p>}
         <button
           type="submit"
           disabled={submitting}

@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-b from-olive-900 to-olive-800 p-6 text-center text-white">
+    <div className="relative flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-b from-olive-900 to-olive-800 p-6 text-center text-white">
+      <div className="absolute end-4 top-4">
+        <ThemeToggle variant="onDark" />
+      </div>
       <p className="font-logo text-4xl">Bayt Zaytoun</p>
       <p className="max-w-md text-olive-100">
         Scannez le QR code d'une table pour commander, ou accédez à l'espace personnel.
