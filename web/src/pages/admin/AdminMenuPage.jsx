@@ -15,6 +15,9 @@ const emptyItemForm = {
   image: "",
 };
 
+const emptyGroupForm = { nameAr: "", nameEn: "", type: "single", required: false };
+const emptyChoiceForm = { nameAr: "", nameEn: "", priceDelta: "" };
+
 export default function AdminMenuPage() {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
@@ -204,6 +207,13 @@ export default function AdminMenuPage() {
                 className="w-full rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-3 py-1.5 text-sm text-olive-900 dark:text-sand-50"
               />
             ))}
+
+            <OptionGroupsEditor
+              itemId={editingItem.id}
+              groups={categories.flatMap((c) => c.menuItems).find((i) => i.id === editingItem.id)?.optionGroups || []}
+              onChanged={load}
+            />
+
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => setEditingItem(null)}
@@ -218,6 +228,176 @@ export default function AdminMenuPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Gestion des groupes d'options d'un plat (ex. "Sauce" à choix unique et
+// gratuit, "Suppléments" à choix multiples et payants) — entièrement libre,
+// c'est l'admin qui décide du nom, du type et du prix de chaque choix.
+function OptionGroupsEditor({ itemId, groups, onChanged }) {
+  const { t } = useTranslation();
+  const [newGroup, setNewGroup] = useState(emptyGroupForm);
+  const [choiceForms, setChoiceForms] = useState({});
+
+  async function addGroup(e) {
+    e.preventDefault();
+    if (!newGroup.nameAr || !newGroup.nameEn) return;
+    await api.post(`/admin/menu-items/${itemId}/option-groups`, newGroup);
+    setNewGroup(emptyGroupForm);
+    onChanged();
+  }
+
+  async function deleteGroup(id) {
+    if (!confirm("Supprimer ce groupe et ses choix ?")) return;
+    await api.delete(`/admin/option-groups/${id}`);
+    onChanged();
+  }
+
+  async function toggleRequired(group) {
+    await api.patch(`/admin/option-groups/${group.id}`, { required: !group.required });
+    onChanged();
+  }
+
+  function updateChoiceForm(groupId, field, value) {
+    setChoiceForms((prev) => ({ ...prev, [groupId]: { ...(prev[groupId] || emptyChoiceForm), [field]: value } }));
+  }
+
+  async function addChoice(groupId) {
+    const form = choiceForms[groupId] || emptyChoiceForm;
+    if (!form.nameAr || !form.nameEn) return;
+    await api.post(`/admin/option-groups/${groupId}/choices`, {
+      ...form,
+      priceDelta: Number(form.priceDelta) || 0,
+    });
+    setChoiceForms((prev) => ({ ...prev, [groupId]: emptyChoiceForm }));
+    onChanged();
+  }
+
+  async function deleteChoice(id) {
+    await api.delete(`/admin/option-choices/${id}`);
+    onChanged();
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl bg-sand-100 dark:bg-olive-800 p-3">
+      <p className="text-sm font-semibold text-olive-800 dark:text-sand-100">{t("admin.options.title")}</p>
+
+      {groups.map((group) => (
+        <div key={group.id} className="rounded-lg bg-white dark:bg-olive-900 p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div>
+              <p className="font-medium text-olive-900 dark:text-sand-50">
+                {group.nameEn} / {group.nameAr}
+              </p>
+              <p className="text-xs text-olive-500 dark:text-olive-400">
+                {group.type === "single" ? t("admin.options.single") : t("admin.options.multiple")}
+                {group.required ? ` · ${t("client.required")}` : ""}
+              </p>
+            </div>
+            <div className="flex flex-none items-center gap-1.5">
+              <button
+                onClick={() => toggleRequired(group)}
+                className="whitespace-nowrap rounded-full bg-sand-100 dark:bg-olive-800 px-2 py-1 text-xs text-olive-700 dark:text-sand-200"
+              >
+                {group.required ? t("admin.options.makeOptional") : t("admin.options.makeRequired")}
+              </button>
+              <button
+                onClick={() => deleteGroup(group.id)}
+                className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-2 space-y-1">
+            {group.choices.map((choice) => (
+              <div
+                key={choice.id}
+                className="flex items-center justify-between rounded border border-sand-100 dark:border-olive-800 px-2 py-1 text-sm"
+              >
+                <span className="text-olive-800 dark:text-sand-100">
+                  {choice.nameEn} / {choice.nameAr}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-olive-600 dark:text-olive-300">
+                    {choice.priceDelta > 0 ? `+${choice.priceDelta}` : t("admin.options.free")}
+                  </span>
+                  <button onClick={() => deleteChoice(choice.id)} className="text-red-600 dark:text-red-400">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            <input
+              placeholder={t("common.nameAr")}
+              value={(choiceForms[group.id] || emptyChoiceForm).nameAr}
+              onChange={(e) => updateChoiceForm(group.id, "nameAr", e.target.value)}
+              className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+            />
+            <input
+              placeholder={t("common.nameEn")}
+              value={(choiceForms[group.id] || emptyChoiceForm).nameEn}
+              onChange={(e) => updateChoiceForm(group.id, "nameEn", e.target.value)}
+              className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+            />
+            <input
+              type="number"
+              placeholder={t("admin.options.price")}
+              value={(choiceForms[group.id] || emptyChoiceForm).priceDelta}
+              onChange={(e) => updateChoiceForm(group.id, "priceDelta", e.target.value)}
+              className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+            />
+            <button
+              onClick={() => addChoice(group.id)}
+              className="flex items-center justify-center gap-1 rounded-full bg-olive-600 px-2 py-1.5 text-xs font-medium text-white"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t("admin.options.addChoice")}
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <form onSubmit={addGroup} className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 sm:items-end">
+        <input
+          placeholder={t("common.nameAr")}
+          value={newGroup.nameAr}
+          onChange={(e) => setNewGroup((p) => ({ ...p, nameAr: e.target.value }))}
+          className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+        />
+        <input
+          placeholder={t("common.nameEn")}
+          value={newGroup.nameEn}
+          onChange={(e) => setNewGroup((p) => ({ ...p, nameEn: e.target.value }))}
+          className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+        />
+        <select
+          value={newGroup.type}
+          onChange={(e) => setNewGroup((p) => ({ ...p, type: e.target.value }))}
+          className="rounded-lg border border-sand-200 dark:border-olive-700 bg-white dark:bg-olive-950/40 px-2 py-1.5 text-sm text-olive-900 dark:text-sand-50"
+        >
+          <option value="single">{t("admin.options.single")}</option>
+          <option value="multiple">{t("admin.options.multiple")}</option>
+        </select>
+        <label className="flex items-center gap-1.5 text-xs text-olive-700 dark:text-sand-200">
+          <input
+            type="checkbox"
+            checked={newGroup.required}
+            onChange={(e) => setNewGroup((p) => ({ ...p, required: e.target.checked }))}
+          />
+          {t("client.required")}
+        </label>
+        <button
+          type="submit"
+          className="flex items-center justify-center gap-1.5 rounded-full bg-brick-500 px-3 py-1.5 text-sm font-medium text-white"
+        >
+          <Plus className="h-4 w-4" /> {t("admin.options.addGroup")}
+        </button>
+      </form>
     </div>
   );
 }

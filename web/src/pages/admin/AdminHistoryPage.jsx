@@ -111,6 +111,12 @@ export default function AdminHistoryPage() {
                                   <li key={item.id} className="flex justify-between">
                                     <span>
                                       {item.quantity}× {item.name}
+                                      {item.options?.length > 0 && (
+                                        <span className="text-olive-500 dark:text-olive-400">
+                                          {" "}
+                                          ({item.options.map((o) => o.name).join(", ")})
+                                        </span>
+                                      )}
                                       {item.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({item.note})</em>}
                                     </span>
                                     <span>{(item.unitPrice * item.quantity).toFixed(2)}</span>

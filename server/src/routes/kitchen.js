@@ -16,7 +16,7 @@ kitchenRouter.get("/orders", async (req, res) => {
       tableSession: { diningTable: { restaurantId: req.user.restaurantId } },
     },
     include: {
-      items: { include: { menuItem: true } },
+      items: { include: { menuItem: true, options: true } },
       tableSession: { include: { diningTable: true } },
     },
     orderBy: { createdAt: "asc" },

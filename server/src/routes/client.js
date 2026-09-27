@@ -46,7 +46,15 @@ clientRouter.get("/:qrToken", async (req, res) => {
     where: { restaurantId: table.restaurantId, isActive: true },
     orderBy: { position: "asc" },
     include: {
-      menuItems: { orderBy: { position: "asc" } },
+      menuItems: {
+        orderBy: { position: "asc" },
+        include: {
+          optionGroups: {
+            orderBy: { position: "asc" },
+            include: { choices: { orderBy: { position: "asc" } } },
+          },
+        },
+      },
     },
   });
 
@@ -82,7 +90,7 @@ clientRouter.get("/:qrToken/orders", async (req, res) => {
 
   const orders = await prisma.order.findMany({
     where: { tableSessionId: session.id },
-    include: { items: true },
+    include: { items: { include: { options: true } } },
     orderBy: { createdAt: "asc" },
   });
 
@@ -102,6 +110,7 @@ clientRouter.post("/:qrToken/orders", orderLimiter, async (req, res) => {
   const menuItemIds = items.map((i) => Number(i.menuItemId)).filter(Boolean);
   const menuItems = await prisma.menuItem.findMany({
     where: { id: { in: menuItemIds } },
+    include: { optionGroups: { include: { choices: true } } },
   });
   const byId = new Map(menuItems.map((m) => [m.id, m]));
 
@@ -111,14 +120,49 @@ clientRouter.post("/:qrToken/orders", orderLimiter, async (req, res) => {
   for (const raw of items) {
     const menuItem = byId.get(Number(raw.menuItemId));
     if (!menuItem || !menuItem.isAvailable) continue;
+
+    // Le client envoie juste les ids des choix cochés ; le serveur vérifie
+    // qu'ils appartiennent bien au plat, sont disponibles, respectent les
+    // groupes obligatoires, et reprend leur prix tel qu'il est en base.
+    const requestedChoiceIds = new Set((raw.optionChoiceIds || []).map(Number));
+    const selectedChoices = [];
+    let groupsSatisfied = true;
+
+    for (const group of menuItem.optionGroups) {
+      const availableChoices = group.choices.filter((c) => c.isAvailable);
+      const picked = availableChoices.filter((c) => requestedChoiceIds.has(c.id));
+
+      if (group.required && picked.length === 0) {
+        groupsSatisfied = false;
+        break;
+      }
+
+      if (group.type === "single") {
+        if (picked.length > 0) selectedChoices.push(picked[0]);
+      } else {
+        selectedChoices.push(...picked);
+      }
+    }
+
+    if (!groupsSatisfied) continue;
+
     // Le prix envoyé par le navigateur est ignoré : on reprend le prix en base.
     const quantity = Math.max(1, Math.min(20, Number(raw.quantity) || 1));
+    const optionsTotal = selectedChoices.reduce((s, c) => s + c.priceDelta, 0);
+
     preparedItems.push({
       menuItemId: menuItem.id,
       name: menuItem.nameEn,
-      unitPrice: menuItem.price,
+      unitPrice: menuItem.price + optionsTotal,
       quantity,
       note: (raw.note || "").slice(0, 300),
+      options: {
+        create: selectedChoices.map((c) => ({
+          optionChoiceId: c.id,
+          name: c.nameEn,
+          priceDelta: c.priceDelta,
+        })),
+      },
     });
   }
 
@@ -136,7 +180,7 @@ clientRouter.post("/:qrToken/orders", orderLimiter, async (req, res) => {
       note: (note || "").slice(0, 300),
       items: { create: preparedItems },
     },
-    include: { items: true },
+    include: { items: { include: { options: true } } },
   });
 
   await recalcSessionTotal(session.id);

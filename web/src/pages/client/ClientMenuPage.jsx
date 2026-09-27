@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Bell,
+  Check,
   CheckCircle2,
   ChefHat,
   Clock,
@@ -127,12 +128,25 @@ export default function ClientMenuPage() {
     return () => observer.disconnect();
   }, [data, tab]);
 
-  const cartTotal = useMemo(() => cart.reduce((s, c) => s + c.price * c.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((s, c) => s + c.unitPrice * c.quantity, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((s, c) => s + c.quantity, 0), [cart]);
 
-  function addToCart(item, quantity, note) {
+  function addToCart(item, quantity, note, selectedChoices = []) {
+    const unitPrice = item.price + selectedChoices.reduce((s, c) => s + c.priceDelta, 0);
+    const options = selectedChoices.map((c) => ({
+      id: c.id,
+      name: localized(c, "name", lang),
+      priceDelta: c.priceDelta,
+    }));
+    const optionsKey = selectedChoices
+      .map((c) => c.id)
+      .sort((a, b) => a - b)
+      .join(",");
+
     setCart((prev) => {
-      const idx = prev.findIndex((c) => c.menuItemId === item.id && c.note === note);
+      const idx = prev.findIndex(
+        (c) => c.menuItemId === item.id && c.note === note && c.optionsKey === optionsKey
+      );
       if (idx >= 0) {
         const next = [...prev];
         next[idx] = { ...next[idx], quantity: next[idx].quantity + quantity };
@@ -140,13 +154,13 @@ export default function ClientMenuPage() {
       }
       return [
         ...prev,
-        { menuItemId: item.id, name: localized(item, "name", lang), price: item.price, quantity, note },
+        { menuItemId: item.id, name: localized(item, "name", lang), unitPrice, quantity, note, options, optionsKey },
       ];
     });
   }
 
-  function handleModalAdd(item, quantity, note) {
-    addToCart(item, quantity, note);
+  function handleModalAdd(item, quantity, note, selectedChoices) {
+    addToCart(item, quantity, note, selectedChoices);
     setActiveItem(null);
     setTab("menu");
   }
@@ -164,7 +178,12 @@ export default function ClientMenuPage() {
   async function sendOrder() {
     if (cart.length === 0) return;
     await api.post(`/t/${qrToken}/orders`, {
-      items: cart.map((c) => ({ menuItemId: c.menuItemId, quantity: c.quantity, note: c.note })),
+      items: cart.map((c) => ({
+        menuItemId: c.menuItemId,
+        quantity: c.quantity,
+        note: c.note,
+        optionChoiceIds: c.options.map((o) => o.id),
+      })),
     });
     setCart([]);
     setTab("orders");
@@ -308,6 +327,12 @@ export default function ClientMenuPage() {
                     <li key={it.id} className="flex justify-between">
                       <span>
                         {it.quantity}× {it.name}
+                        {it.options?.length > 0 && (
+                          <span className="text-olive-500 dark:text-olive-400">
+                            {" "}
+                            ({it.options.map((o) => o.name).join(", ")})
+                          </span>
+                        )}
                         {it.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({it.note})</em>}
                       </span>
                       <span>{(it.unitPrice * it.quantity).toFixed(2)}</span>
@@ -399,6 +424,7 @@ export default function ClientMenuPage() {
 // un bouton "+" pour ajouter en un tap sans ouvrir la fiche détaillée.
 function ItemRow({ item, lang, currency, justAdded, onOpen, onQuickAdd }) {
   const { t } = useTranslation();
+  const canQuickAdd = !item.optionGroups?.some((g) => g.required);
 
   return (
     <div
@@ -432,7 +458,7 @@ function ItemRow({ item, lang, currency, justAdded, onOpen, onQuickAdd }) {
             className={`h-full w-full object-cover ${!item.isAvailable ? "grayscale" : ""}`}
           />
         )}
-        {item.isAvailable && (
+        {item.isAvailable && canQuickAdd && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -455,10 +481,33 @@ function ItemModal({ item, lang, currency, onClose, onAdd }) {
   const { t } = useTranslation();
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
+  const [selections, setSelections] = useState({}); // groupId -> choiceId[]
+
+  const groups = item.optionGroups || [];
+
+  function toggleChoice(group, choice) {
+    setSelections((prev) => {
+      const current = prev[group.id] || [];
+      if (group.type === "single") {
+        return { ...prev, [group.id]: current.includes(choice.id) ? [] : [choice.id] };
+      }
+      const next = current.includes(choice.id)
+        ? current.filter((id) => id !== choice.id)
+        : [...current, choice.id];
+      return { ...prev, [group.id]: next };
+    });
+  }
+
+  const selectedChoices = groups.flatMap((g) =>
+    g.choices.filter((c) => (selections[g.id] || []).includes(c.id))
+  );
+  const optionsTotal = selectedChoices.reduce((s, c) => s + c.priceDelta, 0);
+  const unitPrice = item.price + optionsTotal;
+  const canAdd = groups.every((g) => !g.required || (selections[g.id] || []).length > 0);
 
   return (
     <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/50 animate-fade-in sm:items-center">
-      <div className="animate-slide-up w-full max-w-md rounded-t-3xl bg-white dark:bg-olive-900 sm:rounded-3xl">
+      <div className="animate-slide-up max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white dark:bg-olive-900 sm:rounded-3xl">
         <div className="relative">
           {item.image && (
             <img src={item.image} alt="" className="h-48 w-full rounded-t-3xl object-cover sm:rounded-t-3xl" />
@@ -474,8 +523,58 @@ function ItemModal({ item, lang, currency, onClose, onAdd }) {
           <h3 className="text-lg font-bold text-olive-900 dark:text-sand-50">{localized(item, "name", lang)}</h3>
           <p className="mb-2 text-sm text-olive-600 dark:text-olive-300">{localized(item, "description", lang)}</p>
           <p className="mb-4 text-lg font-bold text-brick-600 dark:text-brick-400">
-            {item.price} {currency}
+            {unitPrice.toFixed(2)} {currency}
           </p>
+
+          {groups.map((group) => (
+            <div key={group.id} className="mb-4">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-sm font-semibold text-olive-800 dark:text-sand-100">
+                  {localized(group, "name", lang)}
+                </span>
+                {group.required && (
+                  <span className="rounded-full bg-brick-500/10 px-2 py-0.5 text-xs font-medium text-brick-600 dark:text-brick-400">
+                    {t("client.required")}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                {group.choices
+                  .filter((c) => c.isAvailable)
+                  .map((choice) => {
+                    const checked = (selections[group.id] || []).includes(choice.id);
+                    return (
+                      <button
+                        key={choice.id}
+                        type="button"
+                        onClick={() => toggleChoice(group, choice)}
+                        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
+                          checked
+                            ? "border-olive-600 bg-olive-50 dark:bg-olive-800"
+                            : "border-sand-200 dark:border-olive-700"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 text-olive-800 dark:text-sand-100">
+                          <span
+                            className={`flex h-4 w-4 flex-none items-center justify-center border ${
+                              group.type === "single" ? "rounded-full" : "rounded"
+                            } ${checked ? "border-olive-600 bg-olive-600" : "border-sand-300 dark:border-olive-600"}`}
+                          >
+                            {checked && <Check className="h-3 w-3 text-white" />}
+                          </span>
+                          {localized(choice, "name", lang)}
+                        </span>
+                        {choice.priceDelta > 0 && (
+                          <span className="text-olive-600 dark:text-olive-300">
+                            +{choice.priceDelta} {currency}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
 
           <label className="mb-1 block text-sm font-medium text-olive-700 dark:text-sand-200">{t("client.quantity")}</label>
           <div className="mb-4 flex items-center gap-3">
@@ -509,8 +608,9 @@ function ItemModal({ item, lang, currency, onClose, onAdd }) {
               {t("client.close")}
             </button>
             <button
-              onClick={() => onAdd(item, quantity, note)}
-              className="flex-1 rounded-full bg-olive-600 py-2 font-medium text-white"
+              onClick={() => onAdd(item, quantity, note, selectedChoices)}
+              disabled={!canAdd}
+              className="flex-1 rounded-full bg-olive-600 py-2 font-medium text-white disabled:opacity-50"
             >
               {t("client.addToCart")}
             </button>
@@ -553,11 +653,16 @@ function CartModal({ cart, currency, total, onRemove, onClose, onSend }) {
                   <p className="font-medium text-olive-800 dark:text-sand-100">
                     {c.quantity}× {c.name}
                   </p>
+                  {c.options.length > 0 && (
+                    <p className="text-xs text-olive-500 dark:text-olive-400">
+                      {c.options.map((o) => o.name).join(", ")}
+                    </p>
+                  )}
                   {c.note && <p className="text-xs text-olive-500 dark:text-olive-400">{c.note}</p>}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-olive-700 dark:text-sand-200">
-                    {(c.price * c.quantity).toFixed(2)}
+                    {(c.unitPrice * c.quantity).toFixed(2)}
                   </span>
                   <button onClick={() => onRemove(idx)} className="text-red-500 dark:text-red-400">
                     <X className="h-4 w-4" />

@@ -11,7 +11,17 @@ publicMenuRouter.get("/:slug", async (req, res) => {
   const categories = await prisma.category.findMany({
     where: { restaurantId: restaurant.id, isActive: true },
     orderBy: { position: "asc" },
-    include: { menuItems: { orderBy: { position: "asc" } } },
+    include: {
+      menuItems: {
+        orderBy: { position: "asc" },
+        include: {
+          optionGroups: {
+            orderBy: { position: "asc" },
+            include: { choices: { orderBy: { position: "asc" } } },
+          },
+        },
+      },
+    },
   });
 
   res.json({ restaurant, categories });

@@ -32,7 +32,17 @@ adminRouter.get("/categories", async (req, res) => {
   const categories = await prisma.category.findMany({
     where: { restaurantId: req.user.restaurantId },
     orderBy: { position: "asc" },
-    include: { menuItems: { orderBy: { position: "asc" } } },
+    include: {
+      menuItems: {
+        orderBy: { position: "asc" },
+        include: {
+          optionGroups: {
+            orderBy: { position: "asc" },
+            include: { choices: { orderBy: { position: "asc" } } },
+          },
+        },
+      },
+    },
   });
   res.json(categories);
 });
@@ -160,7 +170,114 @@ adminRouter.delete("/menu-items/:id", async (req, res) => {
   const id = Number(req.params.id);
   const item = await loadOwnedMenuItem(id, req.user.restaurantId);
   if (!item) return res.status(404).json({ error: "not_found" });
+  const groupIds = (await prisma.optionGroup.findMany({ where: { menuItemId: id }, select: { id: true } })).map(
+    (g) => g.id
+  );
+  await prisma.optionChoice.deleteMany({ where: { optionGroupId: { in: groupIds } } });
+  await prisma.optionGroup.deleteMany({ where: { menuItemId: id } });
   await prisma.menuItem.delete({ where: { id } });
+  res.status(204).end();
+});
+
+/* ---------------- Option groups & choices ---------------- */
+
+async function loadOwnedOptionGroup(id, restaurantId) {
+  return prisma.optionGroup.findFirst({
+    where: { id, menuItem: { category: { restaurantId } } },
+  });
+}
+
+async function loadOwnedOptionChoice(id, restaurantId) {
+  return prisma.optionChoice.findFirst({
+    where: { id, optionGroup: { menuItem: { category: { restaurantId } } } },
+  });
+}
+
+// POST /api/admin/menu-items/:itemId/option-groups -> ex. "Sauce" (unique) ou "Suppléments" (multiple)
+adminRouter.post("/menu-items/:itemId/option-groups", async (req, res) => {
+  const itemId = Number(req.params.itemId);
+  const item = await loadOwnedMenuItem(itemId, req.user.restaurantId);
+  if (!item) return res.status(404).json({ error: "not_found" });
+
+  const { nameAr, nameEn, type, required, position } = req.body || {};
+  if (!nameAr || !nameEn || !["single", "multiple"].includes(type)) {
+    return res.status(400).json({ error: "missing_or_invalid_fields" });
+  }
+
+  const group = await prisma.optionGroup.create({
+    data: { menuItemId: itemId, nameAr, nameEn, type, required: !!required, position: position ?? 0 },
+    include: { choices: true },
+  });
+  res.status(201).json(group);
+});
+
+adminRouter.patch("/option-groups/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const group = await loadOwnedOptionGroup(id, req.user.restaurantId);
+  if (!group) return res.status(404).json({ error: "not_found" });
+
+  const { nameAr, nameEn, type, required, position } = req.body || {};
+  const updated = await prisma.optionGroup.update({
+    where: { id },
+    data: {
+      ...(nameAr !== undefined && { nameAr }),
+      ...(nameEn !== undefined && { nameEn }),
+      ...(type !== undefined && { type }),
+      ...(required !== undefined && { required: !!required }),
+      ...(position !== undefined && { position }),
+    },
+  });
+  res.json(updated);
+});
+
+adminRouter.delete("/option-groups/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const group = await loadOwnedOptionGroup(id, req.user.restaurantId);
+  if (!group) return res.status(404).json({ error: "not_found" });
+  await prisma.optionChoice.deleteMany({ where: { optionGroupId: id } });
+  await prisma.optionGroup.delete({ where: { id } });
+  res.status(204).end();
+});
+
+// POST /api/admin/option-groups/:groupId/choices -> ex. "Algérienne" +0, "Fromage" +5
+adminRouter.post("/option-groups/:groupId/choices", async (req, res) => {
+  const groupId = Number(req.params.groupId);
+  const group = await loadOwnedOptionGroup(groupId, req.user.restaurantId);
+  if (!group) return res.status(404).json({ error: "not_found" });
+
+  const { nameAr, nameEn, priceDelta, position } = req.body || {};
+  if (!nameAr || !nameEn) return res.status(400).json({ error: "missing_fields" });
+
+  const choice = await prisma.optionChoice.create({
+    data: { optionGroupId: groupId, nameAr, nameEn, priceDelta: Number(priceDelta) || 0, position: position ?? 0 },
+  });
+  res.status(201).json(choice);
+});
+
+adminRouter.patch("/option-choices/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const choice = await loadOwnedOptionChoice(id, req.user.restaurantId);
+  if (!choice) return res.status(404).json({ error: "not_found" });
+
+  const { nameAr, nameEn, priceDelta, position, isAvailable } = req.body || {};
+  const updated = await prisma.optionChoice.update({
+    where: { id },
+    data: {
+      ...(nameAr !== undefined && { nameAr }),
+      ...(nameEn !== undefined && { nameEn }),
+      ...(priceDelta !== undefined && { priceDelta: Number(priceDelta) }),
+      ...(position !== undefined && { position }),
+      ...(isAvailable !== undefined && { isAvailable }),
+    },
+  });
+  res.json(updated);
+});
+
+adminRouter.delete("/option-choices/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const choice = await loadOwnedOptionChoice(id, req.user.restaurantId);
+  if (!choice) return res.status(404).json({ error: "not_found" });
+  await prisma.optionChoice.delete({ where: { id } });
   res.status(204).end();
 });
 
@@ -396,7 +513,7 @@ adminRouter.get("/history/sessions", async (req, res) => {
       diningTable: true,
       orders: {
         where: { status: { not: "cancelled" } },
-        include: { items: true },
+        include: { items: { include: { options: true } } },
         orderBy: { createdAt: "asc" },
       },
     },

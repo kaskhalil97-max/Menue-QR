@@ -174,6 +174,11 @@ function KitchenCard({ order, onAdvance, onCancel }) {
             <li key={it.id}>
               <span className="font-semibold">{it.quantity}×</span> {it.menuItem?.nameAr || it.name}
               {it.menuItem?.nameAr && <span className="text-olive-500 dark:text-olive-400"> / {it.name}</span>}
+              {it.options?.length > 0 && (
+                <div className="text-sm text-olive-600 dark:text-olive-300">
+                  {it.options.map((o) => o.name).join(", ")}
+                </div>
+              )}
               {it.note && (
                 <div className="text-sm italic text-brick-600 dark:text-brick-400">
                   {t("kitchen.note")}: {it.note}

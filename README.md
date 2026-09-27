@@ -104,21 +104,37 @@ nom généré aléatoirement dans `server/uploads/` (non versionné) et renvoie
 une URL absolue, servie statiquement via `express.static`. Le champ reste
 aussi éditable manuellement pour coller un lien externe (Unsplash, etc.).
 
+## Options de plats (sauces, suppléments)
+
+Chaque plat peut avoir des groupes d'options entièrement configurables par
+l'admin (nom, choix unique ou multiple, obligatoire ou non) et des choix au
+prix libre (0 = gratuit). Ex. : "Sauce" à choix unique et gratuit, obligatoire
+avant d'ajouter au panier ; "Suppléments" à choix multiples et payants,
+optionnel. Le prix de la ligne (et le bouton "+" d'ajout rapide façon Uber
+Eats) s'adapte en conséquence : un plat avec un groupe obligatoire ouvre
+toujours la fiche détaillée plutôt que d'ajouter en un tap, pour ne jamais
+commander un plat incomplet. Comme pour le reste, le serveur revalide tout
+(groupes obligatoires satisfaits, prix des choix) et ignore ce qu'envoie le
+navigateur.
+
 ## Fonctionnalités par interface
 
-- **Client** (`/t/:qrToken`, mobile, sans compte) : menu par catégories,
-  fiche plat (photo/description/prix), panier avec quantité et note, envoi
-  de commande, suivi de statut en direct, appel serveur, demande d'addition,
-  sélecteur de langue ar/en.
-- **Cuisine** (`/kitchen`) : cartes de commande en temps réel, minuteur
-  vert/orange/rouge (seuils configurables), alerte sonore sur nouvelle
-  commande, avancement de statut, annulation.
+- **Client** (`/t/:qrToken`, mobile, sans compte) : menu par catégories en
+  lignes façon Uber Eats, fiche plat (photo/description/prix/options),
+  panier avec quantité et note, envoi de commande, suivi de statut en
+  direct, appel serveur, demande d'addition, sélecteur de langue ar/en,
+  mode sombre.
+- **Cuisine** (`/kitchen`) : tableau kanban (Nouvelle/En préparation/Prête)
+  en temps réel, minuteur vert/orange/rouge (seuils configurables), alerte
+  sonore sur nouvelle commande, avancement de statut, annulation.
 - **Serveur** (`/waiter`) : commandes prêtes à servir, appels de table,
-  clôture d'addition (espèces/carte).
-- **Gérant** (`/admin`) : gestion du menu (catégories, plats, bouton
-  « Épuisé »), gestion des tables (ajout, activation, régénération de QR,
-  export PDF de tous les QR codes), gestion du personnel, tableau de bord
-  (chiffre d'affaires du jour, plats les plus vendus, heures de pointe).
+  toutes les tables occupées avec clôture d'addition directe (espèces/carte)
+  — même si le client n'a jamais demandé l'addition depuis l'app.
+- **Gérant** (`/admin`) : gestion du menu (catégories, plats, photos
+  uploadées, options, bouton « Épuisé »), gestion des tables (ajout,
+  activation, régénération de QR, export PDF, clôture d'addition directe),
+  gestion du personnel, tableau de bord (chiffre d'affaires, plats les plus
+  vendus, heures de pointe), historique des additions clôturées.
 
 ## Pour la présentation Mostaql
 
@@ -134,7 +150,6 @@ aussi éditable manuellement pour coller un lien externe (Unsplash, etc.).
 
 ## Pour plus tard (V2, hors périmètre V1)
 
-- Options de plats (tailles, suppléments).
 - Paiement en ligne de l'addition (mode test).
 - Impression automatique des tickets en cuisine.
 - Multi-restaurants en SaaS (le `restaurant_id` est déjà en place).

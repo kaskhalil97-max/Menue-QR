@@ -87,6 +87,9 @@ export default function WaiterPage() {
                   {order.items.map((it) => (
                     <li key={it.id}>
                       {it.quantity}× {it.name}
+                      {it.options?.length > 0 && (
+                        <span className="text-olive-500 dark:text-olive-400"> ({it.options.map((o) => o.name).join(", ")})</span>
+                      )}
                     </li>
                   ))}
                 </ul>

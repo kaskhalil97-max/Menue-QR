@@ -14,7 +14,7 @@ waiterRouter.get("/orders/ready", async (req, res) => {
       status: "ready",
       tableSession: { diningTable: { restaurantId: req.user.restaurantId } },
     },
-    include: { items: true, tableSession: { include: { diningTable: true } } },
+    include: { items: { include: { options: true } }, tableSession: { include: { diningTable: true } } },
     orderBy: { createdAt: "asc" },
   });
   res.json(orders);
@@ -117,7 +117,7 @@ waiterRouter.get("/sessions/:id", async (req, res) => {
     where: { id, diningTable: { restaurantId: req.user.restaurantId } },
     include: {
       diningTable: true,
-      orders: { include: { items: true }, where: { status: { not: "cancelled" } } },
+      orders: { include: { items: { include: { options: true } } }, where: { status: { not: "cancelled" } } },
     },
   });
   if (!session) return res.status(404).json({ error: "not_found" });

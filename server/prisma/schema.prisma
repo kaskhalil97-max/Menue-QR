@@ -101,10 +101,45 @@ model MenuItem {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  category   Category    @relation(fields: [categoryId], references: [id])
-  orderItems OrderItem[]
+  category     Category      @relation(fields: [categoryId], references: [id])
+  orderItems   OrderItem[]
+  optionGroups OptionGroup[]
 
   @@map("menu_items")
+}
+
+model OptionGroup {
+  id         Int      @id @default(autoincrement())
+  menuItemId Int
+  nameAr     String
+  nameEn     String
+  type       String   @default("single") // single | multiple
+  required   Boolean  @default(false)
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  menuItem MenuItem       @relation(fields: [menuItemId], references: [id])
+  choices  OptionChoice[]
+
+  @@map("option_groups")
+}
+
+model OptionChoice {
+  id            Int      @id @default(autoincrement())
+  optionGroupId Int
+  nameAr        String
+  nameEn        String
+  priceDelta    Float    @default(0)
+  position      Int      @default(0)
+  isAvailable   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  optionGroup      OptionGroup       @relation(fields: [optionGroupId], references: [id])
+  orderItemOptions OrderItemOption[]
+
+  @@map("option_choices")
 }
 
 model Order {
@@ -133,10 +168,25 @@ model OrderItem {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  order    Order    @relation(fields: [orderId], references: [id])
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  order    Order             @relation(fields: [orderId], references: [id])
+  menuItem MenuItem          @relation(fields: [menuItemId], references: [id])
+  options  OrderItemOption[]
 
   @@map("order_items")
+}
+
+model OrderItemOption {
+  id             Int      @id @default(autoincrement())
+  orderItemId    Int
+  optionChoiceId Int
+  name           String
+  priceDelta     Float
+  createdAt      DateTime @default(now())
+
+  orderItem    OrderItem    @relation(fields: [orderItemId], references: [id])
+  optionChoice OptionChoice @relation(fields: [optionChoiceId], references: [id])
+
+  @@map("order_item_options")
 }
 
 model ServiceRequest {

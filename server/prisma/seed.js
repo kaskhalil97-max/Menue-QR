@@ -314,7 +314,7 @@ async function main() {
     });
     let itemPosition = 0;
     for (const item of cat.items) {
-      await prisma.menuItem.create({
+      const menuItem = await prisma.menuItem.create({
         data: {
           categoryId: category.id,
           nameAr: item.nameAr,
@@ -326,6 +326,45 @@ async function main() {
           position: itemPosition++,
         },
       });
+
+      // Exemple d'options par plat : groupe à choix unique gratuit (sauce),
+      // groupe à choix multiples payant (suppléments) — configurable par l'admin.
+      if (item.nameEn === "Beef Burger") {
+        await prisma.optionGroup.create({
+          data: {
+            menuItemId: menuItem.id,
+            nameAr: "الصلصة",
+            nameEn: "Sauce",
+            type: "single",
+            required: true,
+            position: 0,
+            choices: {
+              create: [
+                { nameAr: "كاتشب", nameEn: "Ketchup", priceDelta: 0, position: 0 },
+                { nameAr: "مايونيز", nameEn: "Mayo", priceDelta: 0, position: 1 },
+                { nameAr: "باربكيو", nameEn: "BBQ", priceDelta: 0, position: 2 },
+              ],
+            },
+          },
+        });
+        await prisma.optionGroup.create({
+          data: {
+            menuItemId: menuItem.id,
+            nameAr: "إضافات",
+            nameEn: "Extras",
+            type: "multiple",
+            required: false,
+            position: 1,
+            choices: {
+              create: [
+                { nameAr: "جبن إضافي", nameEn: "Extra cheese", priceDelta: 5, position: 0 },
+                { nameAr: "لحم مقدد", nameEn: "Bacon", priceDelta: 8, position: 1 },
+                { nameAr: "أفوكادو", nameEn: "Avocado", priceDelta: 6, position: 2 },
+              ],
+            },
+          },
+        });
+      }
     }
   }
 
