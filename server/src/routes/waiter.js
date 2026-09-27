@@ -89,6 +89,27 @@ waiterRouter.get("/tables/:id/open-session", async (req, res) => {
   res.json(refreshed);
 });
 
+// GET /api/waiter/sessions/open -> toutes les tables actuellement occupées,
+// même si le client n'a jamais demandé l'addition depuis l'app.
+waiterRouter.get("/sessions/open", async (req, res) => {
+  const sessions = await prisma.tableSession.findMany({
+    where: {
+      status: { not: "paid" },
+      diningTable: { restaurantId: req.user.restaurantId },
+    },
+    include: { diningTable: true },
+    orderBy: { openedAt: "asc" },
+  });
+
+  const withFreshTotals = [];
+  for (const session of sessions) {
+    const total = await recalcSessionTotal(session.id);
+    withFreshTotals.push({ ...session, total });
+  }
+
+  res.json(withFreshTotals);
+});
+
 // GET /api/waiter/sessions/:id -> détail addition (table_session + commandes)
 waiterRouter.get("/sessions/:id", async (req, res) => {
   const id = Number(req.params.id);

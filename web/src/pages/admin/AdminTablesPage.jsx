@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Download, Plus, QrCode, RefreshCw } from "lucide-react";
+import { Download, Plus, QrCode, Receipt, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api.js";
+import BillModal from "../../components/BillModal.jsx";
 
 export default function AdminTablesPage() {
   const { t } = useTranslation();
   const [tables, setTables] = useState([]);
+  const [openSessions, setOpenSessions] = useState([]);
   const [label, setLabel] = useState("");
+  const [billSession, setBillSession] = useState(null);
 
   function load() {
     api.get("/admin/tables").then((res) => setTables(res.data));
+    api.get("/waiter/sessions/open").then((res) => setOpenSessions(res.data));
   }
   useEffect(load, []);
 
@@ -68,32 +72,62 @@ export default function AdminTablesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {tables.map((table) => (
-          <div key={table.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-lg font-bold text-olive-900 dark:text-sand-50">{table.label}</span>
+        {tables.map((table) => {
+          const session = openSessions.find((s) => s.diningTableId === table.id);
+          return (
+            <div key={table.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-lg font-bold text-olive-900 dark:text-sand-50">{table.label}</span>
+                <button
+                  onClick={() => toggleActive(table)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    table.isActive ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+                  }`}
+                >
+                  {table.isActive ? t("admin.tables.active") : t("admin.tables.inactive")}
+                </button>
+              </div>
+              <p className="mb-3 flex items-center gap-1.5 break-all text-xs text-olive-500 dark:text-olive-400">
+                <QrCode className="h-3.5 w-3.5 flex-none" />
+                {t("admin.tables.demoLink")}: /t/{table.qrToken}
+              </p>
+
+              {session && (
+                <div className="mb-3 flex items-center justify-between rounded-xl bg-sand-100 dark:bg-olive-800 px-3 py-2">
+                  <div>
+                    <p className="text-xs text-olive-600 dark:text-olive-300">{t("admin.tables.occupied")}</p>
+                    <p className="font-bold text-brick-600 dark:text-brick-400">{session.total.toFixed(2)}</p>
+                  </div>
+                  <button
+                    onClick={() => setBillSession({ diningTableId: table.id })}
+                    className="flex items-center gap-1.5 rounded-full border border-brick-500 px-3 py-1.5 text-sm text-brick-600 dark:text-brick-400"
+                  >
+                    <Receipt className="h-3.5 w-3.5" /> {t("waiter.closeBill")}
+                  </button>
+                </div>
+              )}
+
               <button
-                onClick={() => toggleActive(table)}
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  table.isActive ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
-                }`}
+                onClick={() => regenerate(table.id)}
+                className="flex items-center gap-1.5 text-sm text-olive-600 dark:text-olive-300 underline"
               >
-                {table.isActive ? t("admin.tables.active") : t("admin.tables.inactive")}
+                <RefreshCw className="h-3.5 w-3.5" /> {t("admin.tables.regenerate")}
               </button>
             </div>
-            <p className="mb-3 flex items-center gap-1.5 break-all text-xs text-olive-500 dark:text-olive-400">
-              <QrCode className="h-3.5 w-3.5 flex-none" />
-              {t("admin.tables.demoLink")}: /t/{table.qrToken}
-            </p>
-            <button
-              onClick={() => regenerate(table.id)}
-              className="flex items-center gap-1.5 text-sm text-olive-600 dark:text-olive-300 underline"
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> {t("admin.tables.regenerate")}
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {billSession && (
+        <BillModal
+          diningTableId={billSession.diningTableId}
+          onClose={() => setBillSession(null)}
+          onClosed={() => {
+            setBillSession(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
