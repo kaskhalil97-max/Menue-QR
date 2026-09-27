@@ -54,6 +54,7 @@ export default function ClientMenuPage() {
   const [activeItem, setActiveItem] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [requestSent, setRequestSent] = useState("");
+  const [justAdded, setJustAdded] = useState(null);
   const sectionRefs = useRef({});
   const chipRefs = useRef({});
 
@@ -142,8 +143,18 @@ export default function ClientMenuPage() {
         { menuItemId: item.id, name: localized(item, "name", lang), price: item.price, quantity, note },
       ];
     });
+  }
+
+  function handleModalAdd(item, quantity, note) {
+    addToCart(item, quantity, note);
     setActiveItem(null);
     setTab("menu");
+  }
+
+  function handleQuickAdd(item) {
+    addToCart(item, 1, "");
+    setJustAdded(item.id);
+    setTimeout(() => setJustAdded((cur) => (cur === item.id ? null : cur)), 900);
   }
 
   function removeFromCart(idx) {
@@ -189,7 +200,7 @@ export default function ClientMenuPage() {
   return (
     <div className="min-h-screen bg-sand-50 dark:bg-olive-950 pb-28">
       <header className="sticky top-0 z-20 bg-gradient-to-b from-olive-900 to-olive-800 px-4 pb-4 pt-4 text-white shadow-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div className="flex items-center gap-3">
             {data.restaurant.logo && (
               <img
@@ -211,7 +222,7 @@ export default function ClientMenuPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-4 flex max-w-6xl gap-2">
+        <div className="mx-auto mt-4 flex max-w-2xl gap-2">
           {["menu", "orders"].map((key) => (
             <button
               key={key}
@@ -231,7 +242,7 @@ export default function ClientMenuPage() {
 
       {tab === "menu" && (
         <>
-          <nav className="no-scrollbar sticky top-[104px] z-10 mx-auto flex max-w-6xl gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
+          <nav className="no-scrollbar sticky top-[104px] z-10 mx-auto flex max-w-2xl gap-2 overflow-x-auto bg-sand-50/95 dark:bg-olive-950/95 px-4 py-2.5 backdrop-blur">
             {data.categories.map((cat) => (
               <button
                 key={cat.id}
@@ -248,7 +259,7 @@ export default function ClientMenuPage() {
             ))}
           </nav>
 
-          <main className="mx-auto max-w-6xl space-y-7 px-4 py-4">
+          <main className="mx-auto max-w-2xl space-y-6 px-4 py-4">
             {data.categories.map((cat) => (
               <section
                 key={cat.id}
@@ -256,43 +267,18 @@ export default function ClientMenuPage() {
                 ref={(el) => (sectionRefs.current[cat.id] = el)}
                 className="scroll-mt-[160px]"
               >
-                <h2 className="mb-3 text-lg font-bold text-olive-900 dark:text-sand-50">{localized(cat, "name", lang)}</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <h2 className="mb-2 text-lg font-bold text-olive-900 dark:text-sand-50">{localized(cat, "name", lang)}</h2>
+                <div className="divide-y divide-sand-100 dark:divide-olive-800 overflow-hidden rounded-2xl bg-white dark:bg-olive-900 shadow-card">
                   {cat.menuItems.map((item) => (
-                    <button
+                    <ItemRow
                       key={item.id}
-                      onClick={() => item.isAvailable && setActiveItem(item)}
-                      disabled={!item.isAvailable}
-                      className="group overflow-hidden rounded-2xl bg-white dark:bg-olive-900 text-start shadow-card transition hover:-translate-y-0.5 hover:shadow-floating disabled:hover:translate-y-0"
-                    >
-                      {item.image && (
-                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-sand-100 dark:bg-olive-800">
-                          <img
-                            src={item.image}
-                            alt=""
-                            className={`h-full w-full object-cover transition duration-300 group-hover:scale-105 ${
-                              !item.isAvailable ? "grayscale" : ""
-                            }`}
-                          />
-                          <span className="absolute bottom-2 start-2 rounded-full bg-white/90 px-2.5 py-1 text-sm font-bold text-brick-600 shadow-sm">
-                            {item.price} {data.restaurant.currency}
-                          </span>
-                          {!item.isAvailable && (
-                            <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-                              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-red-700">
-                                {t("client.unavailable")}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div className="p-3">
-                        <p className="font-semibold text-olive-900 dark:text-sand-50">{localized(item, "name", lang)}</p>
-                        <p className="line-clamp-2 text-xs text-olive-600 dark:text-olive-300">
-                          {localized(item, "description", lang)}
-                        </p>
-                      </div>
-                    </button>
+                      item={item}
+                      lang={lang}
+                      currency={data.restaurant.currency}
+                      justAdded={justAdded === item.id}
+                      onOpen={() => item.isAvailable && setActiveItem(item)}
+                      onQuickAdd={() => handleQuickAdd(item)}
+                    />
                   ))}
                 </div>
               </section>
@@ -302,52 +288,50 @@ export default function ClientMenuPage() {
       )}
 
       {tab === "orders" && (
-        <main className="mx-auto max-w-6xl px-4 py-4">
+        <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
           {orders.length === 0 && <p className="text-center text-olive-500 dark:text-olive-400">{t("client.emptyCart")}</p>}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {orders.map((order) => {
-              const StatusIcon = STATUS_ICON[order.status];
-              return (
-                <div key={order.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-semibold text-olive-800 dark:text-sand-100">#{order.id}</span>
-                    <span
-                      className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status]}`}
-                    >
-                      <StatusIcon className="h-3.5 w-3.5" />
-                      {t(`client.status.${order.status}`)}
-                    </span>
-                  </div>
-                  <ul className="space-y-1 text-sm text-olive-700 dark:text-sand-200">
-                    {order.items.map((it) => (
-                      <li key={it.id} className="flex justify-between">
-                        <span>
-                          {it.quantity}× {it.name}
-                          {it.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({it.note})</em>}
-                        </span>
-                        <span>{(it.unitPrice * it.quantity).toFixed(2)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {order.status !== "cancelled" && (
-                    <div className="mt-3 flex gap-1.5">
-                      {STATUS_STEPS.map((step) => {
-                        const reached = STATUS_STEPS.indexOf(order.status) >= STATUS_STEPS.indexOf(step);
-                        return (
-                          <div
-                            key={step}
-                            className={`h-1.5 flex-1 rounded-full transition-colors ${
-                              reached ? "bg-olive-600 dark:bg-olive-400" : "bg-olive-100 dark:bg-olive-800"
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
+          {orders.map((order) => {
+            const StatusIcon = STATUS_ICON[order.status];
+            return (
+              <div key={order.id} className="rounded-2xl bg-white dark:bg-olive-900 p-4 shadow-card">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-semibold text-olive-800 dark:text-sand-100">#{order.id}</span>
+                  <span
+                    className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status]}`}
+                  >
+                    <StatusIcon className="h-3.5 w-3.5" />
+                    {t(`client.status.${order.status}`)}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+                <ul className="space-y-1 text-sm text-olive-700 dark:text-sand-200">
+                  {order.items.map((it) => (
+                    <li key={it.id} className="flex justify-between">
+                      <span>
+                        {it.quantity}× {it.name}
+                        {it.note && <em className="ms-1 text-olive-500 dark:text-olive-400">({it.note})</em>}
+                      </span>
+                      <span>{(it.unitPrice * it.quantity).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {order.status !== "cancelled" && (
+                  <div className="mt-3 flex gap-1.5">
+                    {STATUS_STEPS.map((step) => {
+                      const reached = STATUS_STEPS.indexOf(order.status) >= STATUS_STEPS.indexOf(step);
+                      return (
+                        <div
+                          key={step}
+                          className={`h-1.5 flex-1 rounded-full transition-colors ${
+                            reached ? "bg-olive-600 dark:bg-olive-400" : "bg-olive-100 dark:bg-olive-800"
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </main>
       )}
 
@@ -357,12 +341,12 @@ export default function ClientMenuPage() {
           lang={lang}
           currency={data.restaurant.currency}
           onClose={() => setActiveItem(null)}
-          onAdd={addToCart}
+          onAdd={handleModalAdd}
         />
       )}
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-sand-200 dark:border-olive-700 bg-white/95 dark:bg-olive-900/95 p-3 shadow-[0_-4px_16px_rgba(38,51,15,0.08)] backdrop-blur">
-        <div className="mx-auto max-w-6xl space-y-2">
+        <div className="mx-auto max-w-2xl space-y-2">
           {requestSent && (
             <p className="text-center text-sm font-medium text-olive-700 dark:text-sand-200">{t("client.requestSent")}</p>
           )}
@@ -407,6 +391,62 @@ export default function ClientMenuPage() {
           onSend={sendOrder}
         />
       )}
+    </div>
+  );
+}
+
+// Ligne de menu façon Uber Eats : texte à gauche, vignette carrée à droite avec
+// un bouton "+" pour ajouter en un tap sans ouvrir la fiche détaillée.
+function ItemRow({ item, lang, currency, justAdded, onOpen, onQuickAdd }) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      onClick={onOpen}
+      className={`flex items-center gap-3 p-3 text-start transition ${
+        item.isAvailable ? "cursor-pointer hover:bg-sand-50 dark:hover:bg-olive-800/60" : "opacity-50"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-olive-900 dark:text-sand-50">{localized(item, "name", lang)}</p>
+        <p className="line-clamp-2 text-xs text-olive-600 dark:text-olive-300">
+          {localized(item, "description", lang)}
+        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="font-bold text-brick-600 dark:text-brick-400">
+            {item.price} {currency}
+          </span>
+          {!item.isAvailable && (
+            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-400">
+              {t("client.unavailable")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="relative h-20 w-20 flex-none overflow-hidden rounded-xl bg-sand-100 dark:bg-olive-800 sm:h-24 sm:w-24">
+        {item.image && (
+          <img
+            src={item.image}
+            alt=""
+            className={`h-full w-full object-cover ${!item.isAvailable ? "grayscale" : ""}`}
+          />
+        )}
+        {item.isAvailable && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickAdd();
+            }}
+            aria-label={t("client.addToCart")}
+            className={`absolute bottom-1 end-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-olive-800 shadow-md transition ${
+              justAdded ? "bg-olive-600 text-white" : ""
+            }`}
+          >
+            {justAdded ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
