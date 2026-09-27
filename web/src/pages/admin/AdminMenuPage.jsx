@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "../../lib/api.js";
 
 const emptyItemForm = {
@@ -72,13 +73,13 @@ export default function AdminMenuPage() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={addCategory} className="flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow-sm">
+      <form onSubmit={addCategory} className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-4 shadow-card">
         <div>
           <label className="mb-1 block text-xs font-medium text-olive-700">{t("common.nameAr")}</label>
           <input
             value={newCategory.nameAr}
             onChange={(e) => setNewCategory((c) => ({ ...c, nameAr: e.target.value }))}
-            className="rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
           />
         </div>
         <div>
@@ -86,32 +87,35 @@ export default function AdminMenuPage() {
           <input
             value={newCategory.nameEn}
             onChange={(e) => setNewCategory((c) => ({ ...c, nameEn: e.target.value }))}
-            className="rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
           />
         </div>
-        <button className="rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
-          {t("admin.menu.addCategory")}
+        <button className="flex items-center gap-1.5 rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
+          <Plus className="h-4 w-4" /> {t("admin.menu.addCategory")}
         </button>
       </form>
 
       {categories.map((cat) => (
-        <div key={cat.id} className="rounded-xl bg-white p-4 shadow-sm">
+        <div key={cat.id} className="rounded-2xl bg-white p-4 shadow-card">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-olive-800">
+            <h3 className="text-lg font-bold text-olive-900">
               {cat.nameEn} / {cat.nameAr}
             </h3>
-            <button onClick={() => deleteCategory(cat.id)} className="text-sm text-red-600">
-              {t("admin.menu.delete")}
+            <button
+              onClick={() => deleteCategory(cat.id)}
+              className="flex items-center gap-1 text-sm text-red-600"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> {t("admin.menu.delete")}
             </button>
           </div>
 
           <div className="mb-4 space-y-2">
             {cat.menuItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-lg border border-olive-100 p-2">
+              <div key={item.id} className="flex items-center justify-between rounded-xl border border-sand-100 p-2">
                 <div className="flex items-center gap-3">
-                  {item.image && <img src={item.image} alt="" className="h-12 w-12 rounded object-cover" />}
+                  {item.image && <img src={item.image} alt="" className="h-12 w-12 rounded-lg object-cover" />}
                   <div>
-                    <p className="font-medium text-olive-800">
+                    <p className="font-medium text-olive-900">
                       {item.nameEn} / {item.nameAr}
                     </p>
                     <p className="text-sm text-olive-600">{item.price} MAD</p>
@@ -120,10 +124,11 @@ export default function AdminMenuPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleAvailable(item.id)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
                       item.isAvailable ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                     }`}
                   >
+                    {item.isAvailable ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                     {item.isAvailable ? t("admin.menu.available") : t("admin.menu.soldOut")}
                   </button>
                   <button
@@ -138,55 +143,58 @@ export default function AdminMenuPage() {
                         image: item.image || "",
                       })
                     }
-                    className="text-sm text-olive-600 underline"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-sand-100 text-olive-700"
                   >
-                    {t("admin.menu.edit")}
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => deleteItem(item.id)} className="text-sm text-red-600">
-                    {t("admin.menu.delete")}
+                  <button
+                    onClick={() => deleteItem(item.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-olive-50 p-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-sand-100 p-3 sm:grid-cols-3 lg:grid-cols-6">
             {["nameAr", "nameEn", "descriptionAr", "descriptionEn", "price", "image"].map((field) => (
               <input
                 key={field}
                 placeholder={t(`common.${field}`)}
                 value={(itemForms[cat.id] || emptyItemForm)[field]}
                 onChange={(e) => updateItemForm(cat.id, field, e.target.value)}
-                className="rounded-lg border border-olive-200 px-2 py-1.5 text-sm"
+                className="rounded-lg border border-sand-200 px-2 py-1.5 text-sm"
               />
             ))}
             <button
               onClick={() => addItem(cat.id)}
-              className="col-span-2 rounded-full bg-brick-500 px-3 py-1.5 text-sm font-medium text-white sm:col-span-1"
+              className="col-span-2 flex items-center justify-center gap-1.5 rounded-full bg-brick-500 px-3 py-1.5 text-sm font-medium text-white sm:col-span-1"
             >
-              {t("admin.menu.addItem")}
+              <Plus className="h-4 w-4" /> {t("admin.menu.addItem")}
             </button>
           </div>
         </div>
       ))}
 
       {editingItem && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md space-y-2 rounded-2xl bg-white p-6">
-            <h3 className="mb-2 text-lg font-bold text-olive-800">{t("admin.menu.edit")}</h3>
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 animate-fade-in p-4">
+          <div className="animate-slide-up w-full max-w-md space-y-2 rounded-3xl bg-white p-6">
+            <h3 className="mb-2 text-lg font-bold text-olive-900">{t("admin.menu.edit")}</h3>
             {["nameAr", "nameEn", "descriptionAr", "descriptionEn", "price", "image"].map((field) => (
               <input
                 key={field}
                 placeholder={t(`common.${field}`)}
                 value={editingItem[field]}
                 onChange={(e) => setEditingItem((prev) => ({ ...prev, [field]: e.target.value }))}
-                className="w-full rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+                className="w-full rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
               />
             ))}
             <div className="flex gap-2 pt-2">
               <button
                 onClick={() => setEditingItem(null)}
-                className="flex-1 rounded-full border border-olive-300 py-2 text-olive-700"
+                className="flex-1 rounded-full border border-sand-200 py-2 text-olive-700"
               >
                 {t("admin.menu.cancel")}
               </button>

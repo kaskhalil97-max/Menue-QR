@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { api } from "../../lib/api.js";
 
 function formatDateTime(value) {
@@ -29,14 +30,14 @@ export default function AdminHistoryPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-4 shadow-card">
         <div>
           <label className="mb-1 block text-xs font-medium text-olive-700">{t("admin.history.from")}</label>
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
           />
         </div>
         <div>
@@ -45,11 +46,14 @@ export default function AdminHistoryPage() {
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
           />
         </div>
-        <button onClick={load} className="rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
-          {t("admin.history.filter")}
+        <button
+          onClick={load}
+          className="flex items-center gap-1.5 rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white"
+        >
+          <Filter className="h-4 w-4" /> {t("admin.history.filter")}
         </button>
       </div>
 
@@ -58,9 +62,9 @@ export default function AdminHistoryPage() {
       ) : sessions.length === 0 ? (
         <p className="text-center text-olive-500">{t("admin.history.empty")}</p>
       ) : (
-        <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-card">
           <table className="w-full text-start text-sm">
-            <thead className="bg-olive-100 text-olive-700">
+            <thead className="bg-sand-100 text-olive-700">
               <tr>
                 <th className="px-4 py-2 text-start">{t("admin.history.table")}</th>
                 <th className="px-4 py-2 text-start">{t("admin.history.closedAt")}</th>
@@ -72,21 +76,29 @@ export default function AdminHistoryPage() {
             <tbody>
               {sessions.map((session) => (
                 <Fragment key={session.id}>
-                  <tr className="border-t border-olive-50">
-                    <td className="px-4 py-2 font-medium text-olive-800">{session.diningTable.label}</td>
+                  <tr className="border-t border-sand-100">
+                    <td className="px-4 py-2 font-medium text-olive-900">{session.diningTable.label}</td>
                     <td className="px-4 py-2 text-olive-600">{formatDateTime(session.closedAt)}</td>
                     <td className="px-4 py-2 capitalize text-olive-600">
                       {session.paymentMethod ? t(`waiter.${session.paymentMethod}`) : "—"}
                     </td>
                     <td className="px-4 py-2 font-semibold text-brick-600">{session.total.toFixed(2)}</td>
                     <td className="px-4 py-2 text-end">
-                      <button onClick={() => toggle(session.id)} className="text-sm text-olive-600 underline">
+                      <button
+                        onClick={() => toggle(session.id)}
+                        className="inline-flex items-center gap-1 text-sm text-olive-600 underline"
+                      >
                         {expanded === session.id ? t("admin.history.hide") : t("admin.history.details")}
+                        {expanded === session.id ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
                       </button>
                     </td>
                   </tr>
                   {expanded === session.id && (
-                    <tr className="border-t border-olive-50 bg-olive-50">
+                    <tr className="border-t border-sand-100 bg-sand-100">
                       <td colSpan={5} className="px-4 py-3">
                         <div className="space-y-3">
                           {session.orders.map((order) => (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Download, Plus, QrCode, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api.js";
 
 export default function AdminTablesPage() {
@@ -43,7 +44,7 @@ export default function AdminTablesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-4 shadow-card">
         <form onSubmit={addTable} className="flex items-end gap-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-olive-700">{t("common.name")}</label>
@@ -51,26 +52,26 @@ export default function AdminTablesPage() {
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Table 9"
-              className="rounded-lg border border-olive-200 px-3 py-1.5 text-sm"
+              className="rounded-lg border border-sand-200 px-3 py-1.5 text-sm"
             />
           </div>
-          <button className="rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
-            {t("admin.tables.add")}
+          <button className="flex items-center gap-1.5 rounded-full bg-olive-600 px-4 py-1.5 text-sm font-medium text-white">
+            <Plus className="h-4 w-4" /> {t("admin.tables.add")}
           </button>
         </form>
         <button
           onClick={downloadPdf}
-          className="ms-auto rounded-full bg-brick-500 px-4 py-1.5 text-sm font-medium text-white"
+          className="ms-auto flex items-center gap-1.5 rounded-full bg-brick-500 px-4 py-1.5 text-sm font-medium text-white"
         >
-          {t("admin.tables.downloadPdf")}
+          <Download className="h-4 w-4" /> {t("admin.tables.downloadPdf")}
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {tables.map((table) => (
-          <div key={table.id} className="rounded-xl bg-white p-4 shadow-sm">
+          <div key={table.id} className="rounded-2xl bg-white p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-lg font-bold text-olive-800">{table.label}</span>
+              <span className="text-lg font-bold text-olive-900">{table.label}</span>
               <button
                 onClick={() => toggleActive(table)}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -80,11 +81,15 @@ export default function AdminTablesPage() {
                 {table.isActive ? t("admin.tables.active") : t("admin.tables.inactive")}
               </button>
             </div>
-            <p className="mb-2 break-all text-xs text-olive-500">
+            <p className="mb-3 flex items-center gap-1.5 break-all text-xs text-olive-500">
+              <QrCode className="h-3.5 w-3.5 flex-none" />
               {t("admin.tables.demoLink")}: /t/{table.qrToken}
             </p>
-            <button onClick={() => regenerate(table.id)} className="text-sm text-olive-600 underline">
-              {t("admin.tables.regenerate")}
+            <button
+              onClick={() => regenerate(table.id)}
+              className="flex items-center gap-1.5 text-sm text-olive-600 underline"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> {t("admin.tables.regenerate")}
             </button>
           </div>
         ))}

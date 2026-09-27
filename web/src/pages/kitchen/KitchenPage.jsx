@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CheckCircle2, ChefHat, Clock, Volume2, X } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { socket } from "../../lib/socket.js";
 import { useAuth } from "../../lib/auth.jsx";
@@ -7,6 +8,12 @@ import LangSwitcher from "../../components/LangSwitcher.jsx";
 
 const WARN_MIN = Number(import.meta.env.VITE_KITCHEN_TIMER_WARN_MIN || 10);
 const DANGER_MIN = Number(import.meta.env.VITE_KITCHEN_TIMER_DANGER_MIN || 20);
+
+const COLUMNS = [
+  { status: "new", icon: Clock, tint: "bg-blue-500" },
+  { status: "preparing", icon: ChefHat, tint: "bg-amber-500" },
+  { status: "ready", icon: CheckCircle2, tint: "bg-green-600" },
+];
 
 function useElapsedMinutes(createdAt) {
   const [minutes, setMinutes] = useState(() => (Date.now() - new Date(createdAt)) / 60000);
@@ -83,9 +90,9 @@ export default function KitchenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-olive-50">
-      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-sm">
-        <h1 className="text-xl font-bold text-olive-800">
+    <div className="min-h-screen bg-sand-50">
+      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-card">
+        <h1 className="text-xl font-bold text-olive-900">
           {t("kitchen.title")} — {user?.name}
         </h1>
         <div className="flex items-center gap-3">
@@ -98,8 +105,8 @@ export default function KitchenPage() {
               {t("kitchen.startService")}
             </button>
           ) : (
-            <span className="rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-700">
-              🔊 {t("kitchen.serviceStarted")}
+            <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-700">
+              <Volume2 className="h-4 w-4" /> {t("kitchen.serviceStarted")}
             </span>
           )}
           <button onClick={logout} className="text-sm text-olive-600 underline">
@@ -108,13 +115,37 @@ export default function KitchenPage() {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {orders.length === 0 && (
-          <p className="col-span-full text-center text-olive-500">{t("kitchen.empty")}</p>
-        )}
-        {orders.map((order) => (
-          <KitchenCard key={order.id} order={order} onAdvance={advance} onCancel={cancel} />
-        ))}
+      <main className="grid grid-cols-1 gap-4 p-5 md:grid-cols-3">
+        {COLUMNS.map((col) => {
+          const columnOrders = orders.filter((o) => o.status === col.status);
+          const Icon = col.icon;
+          return (
+            <div key={col.status} className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-card">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${col.tint} text-white`}>
+                  <Icon className="h-4 w-4" />
+                </span>
+                <h2 className="flex-1 font-bold text-olive-900">
+                  {col.status === "new" ? t("kitchen.new") : t(`client.status.${col.status}`)}
+                </h2>
+                <span className="rounded-full bg-sand-100 px-2.5 py-0.5 text-sm font-semibold text-olive-700">
+                  {columnOrders.length}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {columnOrders.length === 0 && (
+                  <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+                    {t("kitchen.empty")}
+                  </p>
+                )}
+                {columnOrders.map((order) => (
+                  <KitchenCard key={order.id} order={order} onAdvance={advance} onCancel={cancel} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </main>
     </div>
   );
@@ -127,36 +158,34 @@ function KitchenCard({ order, onAdvance, onCancel }) {
   const table = order.tableSession.diningTable;
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-card">
       <div className={`h-1.5 ${colors.bar}`} />
       <div className="p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-lg font-bold text-olive-800">{table.label}</span>
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${colors.chip}`}>
+          <span className="text-lg font-bold text-olive-900">{table.label}</span>
+          <span className={`rounded-full px-2.5 py-0.5 text-sm font-semibold ${colors.chip}`}>
             {Math.floor(minutes)} min
           </span>
         </div>
-        <span className="mb-2 inline-block rounded-full bg-olive-100 px-2 py-0.5 text-xs font-medium text-olive-700">
-          {order.status === "new" ? t("kitchen.new") : t(`client.status.${order.status}`)}
-        </span>
-        <ul className="mb-3 space-y-1 text-sm text-olive-700">
+        <ul className="mb-3 space-y-1.5 text-base text-olive-800">
           {order.items.map((it) => (
             <li key={it.id}>
-              <span className="font-semibold">{it.quantity}×</span> {it.menuItem?.nameAr} / {it.name}
+              <span className="font-semibold">{it.quantity}×</span> {it.menuItem?.nameAr || it.name}
+              {it.menuItem?.nameAr && <span className="text-olive-500"> / {it.name}</span>}
               {it.note && (
-                <div className="text-xs italic text-brick-600">
+                <div className="text-sm italic text-brick-600">
                   {t("kitchen.note")}: {it.note}
                 </div>
               )}
             </li>
           ))}
         </ul>
-        {order.note && <p className="mb-3 text-xs italic text-brick-600">{order.note}</p>}
+        {order.note && <p className="mb-3 text-sm italic text-brick-600">{order.note}</p>}
         <div className="flex gap-2">
           {order.status !== "ready" && (
             <button
               onClick={() => onAdvance(order.id)}
-              className="flex-1 rounded-full bg-olive-600 py-2 text-sm font-medium text-white"
+              className="flex-1 rounded-full bg-olive-600 py-2.5 text-sm font-medium text-white"
             >
               {order.status === "new" ? t("kitchen.advance.new") : t("kitchen.advance.preparing")}
             </button>
@@ -164,14 +193,14 @@ function KitchenCard({ order, onAdvance, onCancel }) {
           {order.status !== "ready" && (
             <button
               onClick={() => onCancel(order.id)}
-              className="rounded-full border border-red-300 px-3 py-2 text-sm text-red-600"
+              className="flex items-center justify-center rounded-full border border-red-300 px-3 py-2.5 text-red-600"
             >
-              {t("kitchen.cancel")}
+              <X className="h-4 w-4" />
             </button>
           )}
           {order.status === "ready" && (
-            <span className="flex-1 rounded-full bg-green-100 py-2 text-center text-sm font-medium text-green-700">
-              {t("client.status.ready")}
+            <span className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-green-100 py-2.5 text-sm font-medium text-green-700">
+              <CheckCircle2 className="h-4 w-4" /> {t("client.status.ready")}
             </span>
           )}
         </div>

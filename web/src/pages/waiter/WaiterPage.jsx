@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Banknote, Bell, Check, CreditCard, Receipt, UtensilsCrossed, X } from "lucide-react";
 import { api } from "../../lib/api.js";
 import { socket } from "../../lib/socket.js";
 import { useAuth } from "../../lib/auth.jsx";
 import LangSwitcher from "../../components/LangSwitcher.jsx";
+
+const REQUEST_ICON = { call_waiter: Bell, bill: Receipt };
 
 export default function WaiterPage() {
   const { t } = useTranslation();
@@ -41,9 +44,9 @@ export default function WaiterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-olive-50">
-      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-sm">
-        <h1 className="text-xl font-bold text-olive-800">
+    <div className="min-h-screen bg-sand-50">
+      <header className="flex items-center justify-between bg-white px-5 py-3 shadow-card">
+        <h1 className="text-xl font-bold text-olive-900">
           {t("waiter.title")} — {user?.name}
         </h1>
         <div className="flex items-center gap-3">
@@ -56,13 +59,17 @@ export default function WaiterPage() {
 
       <main className="grid grid-cols-1 gap-6 p-5 lg:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-lg font-bold text-olive-800">{t("waiter.readyOrders")}</h2>
+          <h2 className="mb-3 text-lg font-bold text-olive-900">{t("waiter.readyOrders")}</h2>
           <div className="space-y-3">
-            {readyOrders.length === 0 && <p className="text-olive-500">{t("waiter.emptyReady")}</p>}
+            {readyOrders.length === 0 && (
+              <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+                {t("waiter.emptyReady")}
+              </p>
+            )}
             {readyOrders.map((order) => (
-              <div key={order.id} className="rounded-xl bg-white p-4 shadow-sm">
+              <div key={order.id} className="rounded-2xl bg-white p-4 shadow-card">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-bold text-olive-800">{order.tableSession.diningTable.label}</span>
+                  <span className="font-bold text-olive-900">{order.tableSession.diningTable.label}</span>
                   <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs text-green-700">
                     {t("client.status.ready")}
                   </span>
@@ -76,9 +83,9 @@ export default function WaiterPage() {
                 </ul>
                 <button
                   onClick={() => markServed(order.id)}
-                  className="w-full rounded-full bg-olive-600 py-2 text-sm font-medium text-white"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full bg-olive-600 py-2 text-sm font-medium text-white"
                 >
-                  {t("waiter.served")}
+                  <UtensilsCrossed className="h-4 w-4" /> {t("waiter.served")}
                 </button>
               </div>
             ))}
@@ -86,33 +93,45 @@ export default function WaiterPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-lg font-bold text-olive-800">{t("waiter.serviceRequests")}</h2>
+          <h2 className="mb-3 text-lg font-bold text-olive-900">{t("waiter.serviceRequests")}</h2>
           <div className="space-y-3">
-            {requests.length === 0 && <p className="text-olive-500">{t("waiter.emptyRequests")}</p>}
-            {requests.map((reqst) => (
-              <div key={reqst.id} className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm">
-                <div>
-                  <p className="font-bold text-olive-800">{reqst.diningTable.label}</p>
-                  <p className="text-sm text-olive-600">{t(`waiter.type.${reqst.type}`)}</p>
-                </div>
-                <div className="flex gap-2">
-                  {reqst.type === "bill" && (
+            {requests.length === 0 && (
+              <p className="rounded-xl border border-dashed border-sand-200 py-6 text-center text-sm text-olive-400">
+                {t("waiter.emptyRequests")}
+              </p>
+            )}
+            {requests.map((reqst) => {
+              const Icon = REQUEST_ICON[reqst.type];
+              return (
+                <div key={reqst.id} className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-card">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-100 text-olive-700">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="font-bold text-olive-900">{reqst.diningTable.label}</p>
+                      <p className="text-sm text-olive-600">{t(`waiter.type.${reqst.type}`)}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {reqst.type === "bill" && (
+                      <button
+                        onClick={() => setBillSession({ diningTableId: reqst.diningTableId })}
+                        className="rounded-full border border-brick-500 px-3 py-1.5 text-sm text-brick-600"
+                      >
+                        {t("waiter.closeBill")}
+                      </button>
+                    )}
                     <button
-                      onClick={() => setBillSession({ diningTableId: reqst.diningTableId })}
-                      className="rounded-full border border-brick-500 px-3 py-1.5 text-sm text-brick-600"
+                      onClick={() => markHandled(reqst.id)}
+                      className="flex items-center gap-1 rounded-full bg-olive-600 px-3 py-1.5 text-sm text-white"
                     >
-                      {t("waiter.closeBill")}
+                      <Check className="h-3.5 w-3.5" /> {t("waiter.handled")}
                     </button>
-                  )}
-                  <button
-                    onClick={() => markHandled(reqst.id)}
-                    className="rounded-full bg-olive-600 px-3 py-1.5 text-sm text-white"
-                  >
-                    {t("waiter.handled")}
-                  </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </main>
@@ -151,36 +170,46 @@ function BillModal({ diningTableId, onClose, onClosed }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6">
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 animate-fade-in p-4">
+      <div className="animate-slide-up w-full max-w-sm rounded-3xl bg-white p-6">
         {loading ? (
           <p className="text-center text-olive-500">{t("common.loading")}</p>
         ) : !session ? (
           <p className="text-center text-olive-500">—</p>
         ) : (
           <>
-            <h3 className="mb-4 text-lg font-bold text-olive-800">
-              {session.diningTable.label} — {t("waiter.closeBill")}
-            </h3>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-olive-900">
+                {session.diningTable.label} — {t("waiter.closeBill")}
+              </h3>
+              <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-sand-100">
+                <X className="h-4 w-4 text-olive-700" />
+              </button>
+            </div>
             <p className="mb-4 text-2xl font-bold text-brick-600">{session.total.toFixed(2)}</p>
             <label className="mb-1 block text-sm font-medium text-olive-700">
               {t("waiter.paymentMethod")}
             </label>
             <div className="mb-6 flex gap-2">
-              {["cash", "card"].map((m) => (
+              {[
+                { key: "cash", icon: Banknote },
+                { key: "card", icon: CreditCard },
+              ].map(({ key, icon: MIcon }) => (
                 <button
-                  key={m}
-                  onClick={() => setMethod(m)}
-                  className={`flex-1 rounded-full border py-2 text-sm font-medium ${
-                    method === m ? "border-olive-600 bg-olive-600 text-white" : "border-olive-300 text-olive-700"
+                  key={key}
+                  onClick={() => setMethod(key)}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border py-2 text-sm font-medium ${
+                    method === key
+                      ? "border-olive-600 bg-olive-600 text-white"
+                      : "border-sand-200 text-olive-700"
                   }`}
                 >
-                  {t(`waiter.${m}`)}
+                  <MIcon className="h-4 w-4" /> {t(`waiter.${key}`)}
                 </button>
               ))}
             </div>
             <div className="flex gap-2">
-              <button onClick={onClose} className="flex-1 rounded-full border border-olive-300 py-2 text-olive-700">
+              <button onClick={onClose} className="flex-1 rounded-full border border-sand-200 py-2 text-olive-700">
                 {t("client.close")}
               </button>
               <button onClick={confirm} className="flex-1 rounded-full bg-brick-500 py-2 font-medium text-white">

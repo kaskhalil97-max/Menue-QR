@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ClipboardList, TrendingUp } from "lucide-react";
 import { api } from "../../lib/api.js";
+import BarList from "../../components/BarList.jsx";
 
 export default function AdminDashboardPage() {
   const { t } = useTranslation();
@@ -12,46 +14,44 @@ export default function AdminDashboardPage() {
 
   if (!stats) return <p className="text-olive-500">{t("common.loading")}</p>;
 
+  const topItemsData = stats.topItems.map((item) => ({ label: item.name, value: item.quantity }));
+  const peakHoursData = stats.peakHours.map((h) => ({
+    label: `${h.hour}h–${(h.hour + 1) % 24}h`,
+    value: h.count,
+  }));
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-olive-600">{t("admin.dashboard.revenueToday")}</p>
-          <p className="text-3xl font-bold text-brick-600">{stats.revenueToday.toFixed(2)} MAD</p>
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-card">
+          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-brick-500/10 text-brick-600">
+            <TrendingUp className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm text-olive-600">{t("admin.dashboard.revenueToday")}</p>
+            <p className="text-3xl font-bold text-brick-600">{stats.revenueToday.toFixed(2)} MAD</p>
+          </div>
         </div>
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <p className="text-sm text-olive-600">{t("admin.dashboard.ordersToday")}</p>
-          <p className="text-3xl font-bold text-olive-800">{stats.ordersCountToday}</p>
+        <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-card">
+          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-olive-600/10 text-olive-700">
+            <ClipboardList className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm text-olive-600">{t("admin.dashboard.ordersToday")}</p>
+            <p className="text-3xl font-bold text-olive-900">{stats.ordersCountToday}</p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-3 font-bold text-olive-800">{t("admin.dashboard.topItems")}</h3>
-          {stats.topItems.length === 0 && <p className="text-olive-500">—</p>}
-          <ul className="space-y-2">
-            {stats.topItems.map((item, idx) => (
-              <li key={item.name} className="flex items-center justify-between">
-                <span className="text-olive-700">
-                  {idx + 1}. {item.name}
-                </span>
-                <span className="font-semibold text-olive-800">{item.quantity}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="rounded-2xl bg-white p-5 shadow-card">
+          <h3 className="mb-4 font-bold text-olive-900">{t("admin.dashboard.topItems")}</h3>
+          <BarList data={topItemsData} />
         </div>
 
-        <div className="rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-3 font-bold text-olive-800">{t("admin.dashboard.peakHours")}</h3>
-          {stats.peakHours.length === 0 && <p className="text-olive-500">—</p>}
-          <ul className="space-y-2">
-            {stats.peakHours.map((h) => (
-              <li key={h.hour} className="flex items-center justify-between">
-                <span className="text-olive-700">{h.hour}h — {(h.hour + 1) % 24}h</span>
-                <span className="font-semibold text-olive-800">{h.count}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="rounded-2xl bg-white p-5 shadow-card">
+          <h3 className="mb-4 font-bold text-olive-900">{t("admin.dashboard.peakHours")}</h3>
+          <BarList data={peakHoursData} />
         </div>
       </div>
     </div>
